@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title>万载城北汽车站 · 班车时刻表</title>
+    <style>
+    /* ============ 令牌 ============ */
+    :root {
+      --page: #eef3f9;
+      --board: #ffffff;
+      --blue-deep: #0c3c8f;
+      --blue: #1a63c9;
+      --blue-tint: #e9f1fc;
+      --blue-line: #c8d9f2;
+      --ink: #13233c;
+      --ink-soft: #5c6c84;
+      --ink-faint: #98a7bd;
+      --line: #dfe7f2;
+      --urgent: #d92b33;
+      --hei: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", system-ui, sans-serif;
+      --mono: "Cascadia Mono", "JetBrains Mono", Consolas, Menlo, "Courier New", monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      color-scheme: light;
+    }
+
+    body {
+      font-family: var(--hei);
+      background: var(--page);
+      min-height: 100vh;
+      padding: clamp(16px, 3vw, 32px) 16px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    main.station {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    /* ============ 蓝牌（站钟 + 日期） ============ */
+    .masthead {
+      background: var(--blue-deep);
+      color: #fff;
+      border-radius: 10px 10px 0 0;
+      padding: 14px 18px 13px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+    }
+    .masthead .clock {
+      font-family: var(--mono);
+      font-feature-settings: "tnum";
+      font-weight: 700;
+      font-size: clamp(1.1rem, 4.5vw, 1.5rem);
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .masthead-date {
+      font-size: 0.68rem;
+      letter-spacing: 0.22em;
+      opacity: 0.85;
+    }
+    .clock .colon {
+      animation: blink 1s steps(2, start) infinite;
+    }
+    @keyframes blink {
+      0%,
+      55% {
+        opacity: 1;
+      }
+      56%,
+      100% {
+        opacity: 0.12;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .clock .colon {
+        animation: none;
+      }
+    }
+
+    /* ============ 电子信息屏 ============ */
+    .board {
+      background: var(--board);
+      border: 1px solid var(--line);
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 18px 44px rgba(15, 42, 90, 0.14), 0 6px 18px rgba(15, 42, 90,
+        0.08);
+      padding: clamp(16px, 3.5vw, 26px);
+    }
+
+    /* ---- 线路选择（自定义下拉，半宽居中） ---- */
+    .route-field {
+      width: 50%;
+      min-width: 190px;
+      margin: 0 auto 8px;
+    }
+    .route-field + .route-field {
+      margin-top: 16px;
+    }
+    .route-field .field-label {
+      display: block;
+      text-align: center;
+      font-size: 0.64rem;
+      letter-spacing: 0.5em;
+      color: var(--ink-soft);
+      margin-bottom: 9px;
+    }
+    .dd {
+      position: relative;
+    }
+    .dd-head {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      font-family: var(--hei);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--ink);
+      background: var(--board);
+      border: 1.5px solid var(--blue-line);
+      border-radius: 10px;
+      padding: 11px 22px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.12s, box-shadow 0.12s;
+    }
+    .dd-value {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .dd-head:hover:not(:disabled) {
+      border-color: var(--blue);
+    }
+    .dd-head:focus-visible {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px var(--blue-tint);
+    }
+    .dd-head:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .dd-arrow {
+      flex: 0 0 auto;
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid var(--blue-deep);
+      border-bottom: 2px solid var(--blue-deep);
+      transform: translateY(-2px) rotate(45deg);
+      transition: transform 0.15s;
+    }
+    .dd.open .dd-arrow {
+      transform: translateY(2px) rotate(-135deg);
+    }
+    .dd-list {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 6px);
+      margin: 0;
+      padding: 6px;
+      list-style: none;
+      background: var(--board);
+      border: 1.5px solid var(--blue-line);
+      border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(15, 42, 90, 0.18);
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 20;
+      display: none;
+    }
+    .dd.open .dd-list {
+      display: block;
+    }
+    .dd-list li {
+      text-align: center;
+      padding: 10px 12px;
+      border-radius: 7px;
+      font-family: var(--hei);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--ink);
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+    }
+    .dd-list li:hover {
+      background: var(--blue-tint);
+    }
+    .dd-list li[aria-selected="true"] {
+      background: var(--blue-deep);
+      color: #fff;
+    }
+    .dd-list li:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: -2px;
+    }
+
+    /* ---- 换方向按钮（居中，线路下方） ---- */
+    .reverse-row {
+      display: flex;
+      justify-content: center;
+      margin: 12px 0 16px;
+    }
+    .btn-reverse {
+      font-family: var(--hei);
+      border: 1px solid var(--blue-line);
+      background: var(--blue-tint);
+      color: var(--blue-deep);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 8px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+    .btn-reverse:hover:not(:disabled) {
+      background: var(--blue-deep);
+      color: #fff;
+    }
+    .btn-reverse:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* ---- 英雄区：下一班（三项同一行） ---- */
+    .hero {
+      background: var(--board);
+      border: 1px solid var(--blue-line);
+      border-radius: 10px;
+      padding: 16px 14px 14px;
+      margin-bottom: 18px;
+    }
+    .hero-eyebrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.64rem;
+      letter-spacing: 0.5em;
+      color: var(--ink-soft);
+      margin-bottom: 12px;
+    }
+    .hero-eyebrow .dot {
+      width: 9px;
+      height: 9px;
+      background: var(--blue);
+      display: inline-block;
+      border-radius: 2px;
+    }
+    .hero-row {
+      display: flex;
+      align-items: center;
+    }
+    .hero-cell {
+      flex: 1 1 0;
+      min-width: 0;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding: 0 6px;
+    }
+    .hero-cell + .hero-cell::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 12%;
+      bottom: 12%;
+      width: 1px;
+      background: var(--line);
+    }
+    .hero-cell .tag {
+      font-size: 0.6rem;
+      letter-spacing: 0.28em;
+      color: var(--ink-faint);
+      white-space: nowrap;
+    }
+    .hero-route {
+      font-size: clamp(1.15rem, 4.5vw, 1.5rem);
+      font-weight: 800;
+      color: var(--ink);
+      letter-spacing: 0.03em;
+      line-height: 1.3;
+      text-align: center;
+      margin-bottom: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .hero-cell .time {
+      font-family: var(--mono);
+      font-feature-settings: "tnum";
+      font-weight: 700;
+      font-size: clamp(1.3rem, 5vw, 1.7rem);
+      letter-spacing: 0.03em;
+      line-height: 1;
+      color: var(--blue-deep);
+    }
+    /* 距发车 胶囊 */
+    .chip {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      background: var(--blue-deep);
+      color: #fff;
+      border-radius: 8px;
+      padding: 5px 12px 6px;
+    }
+    .chip .cd-num {
+      font-family: var(--mono);
+      font-feature-settings: "tnum";
+      font-weight: 800;
+      font-size: clamp(1.25rem, 4.5vw, 1.55rem);
+      line-height: 1;
+      color: #fff;
+    }
+    .chip .cd-unit {
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: #b9cff0;
+      white-space: nowrap;
+    }
+    .chip .cd-num.roll {
+      animation: roll 0.28s ease;
+    }
+    @keyframes roll {
+      from {
+        transform: translateY(45%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .chip .cd-num.roll {
+        animation: none;
+      }
+    }
+    .chip.urgent {
+      background: var(--urgent);
+      animation: pulse 1.1s ease-in-out infinite;
+    }
+    .chip.urgent .cd-unit {
+      color: #ffd9d9;
+    }
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.82;
+        transform: scale(0.985);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .chip.urgent {
+        animation: none;
+      }
+    }
+
+    /* ---- 时刻列表 ---- */
+    .departures {
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+    }
+    .dep-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.64rem;
+      letter-spacing: 0.5em;
+      color: var(--ink-soft);
+      margin-bottom: 4px;
+    }
+    .dep-head .count {
+      letter-spacing: 0.08em;
+      font-family: var(--mono);
+      color: var(--ink-faint);
+    }
+    .list {
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .list::-webkit-scrollbar-thumb {
+      background: #c9d6ea;
+      border-radius: 3px;
+    }
+    .list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px 8px 15px;
+      border-bottom: 1px solid var(--line);
+      transition: background 0.12s;
+    }
+    .row:last-child {
+      border-bottom: none;
+    }
+    .row:hover {
+      background: var(--blue-tint);
+    }
+    .row .time {
+      font-family: var(--mono);
+      font-feature-settings: "tnum";
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--ink);
+    }
+    .row .note {
+      font-size: 0.7rem;
+      color: var(--ink-soft);
+    }
+    .row.past {
+      opacity: 0.38;
+    }
+    .row.past:hover {
+      background: transparent;
+    }
+
+    /* 下一班：蓝色槽位 */
+    .row.lit {
+      background: var(--blue-tint);
+      box-shadow: inset 3px 0 0 var(--blue);
+    }
+    .row.lit:hover {
+      background: var(--blue-tint);
+    }
+    .row.lit .time {
+      font-weight: 800;
+      color: var(--blue-deep);
+    }
+    .row.lit .note {
+      color: var(--blue);
+    }
+
+    /* 打印入场 */
+    .row {
+      animation: printrow 0.28s ease both;
+      animation-delay: calc(var(--i, 0) * 24ms);
+    }
+    @keyframes printrow {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .row {
+        animation: none;
+      }
+    }
+
+    .empty {
+      padding: 26px 10px;
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+    }
+
+    /* ---- 表脚 ---- */
+    .boardfoot {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 0.64rem;
+      letter-spacing: 0.14em;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+
+    /* ============ 数据栏（导入） ============ */
+    .notice {
+      margin-top: 16px;
+      background: var(--blue-tint);
+      border: 1px solid var(--blue-line);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--ink);
+    }
+    .notice-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+    .file-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .file-wrap input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .btn-file {
+      display: inline-block;
+      background: var(--blue-deep);
+      color: #fff;
+      font-family: var(--hei);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 8px 18px;
+      border-radius: 6px;
+      pointer-events: none;
+    }
+    .btn-clear {
+      border: 1px solid var(--blue-line);
+      background: var(--board);
+      color: var(--ink-soft);
+      font-size: 0.72rem;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: var(--hei);
+    }
+    .btn-clear:hover {
+      color: var(--blue);
+      border-color: var(--blue);
+    }
+    .btn-share {
+      border: 1px solid var(--blue-line);
+      background: var(--board);
+      color: var(--blue-deep);
+      font-size: 0.72rem;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: var(--hei);
+    }
+    .btn-share:hover {
+      color: var(--blue);
+      border-color: var(--blue);
+    }
+    .file-status {
+      font-size: 0.72rem;
+      color: var(--ink-soft);
+    }
+    .file-status.error {
+      color: var(--urgent);
+      font-weight: 700;
+    }
+    .fmt-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 12px;
+      border: none;
+      background: none;
+      font-family: var(--hei);
+      font-size: 0.72rem;
+      color: var(--ink-soft);
+      cursor: pointer;
+      padding: 2px 0;
+    }
+    .fmt-toggle:hover {
+      color: var(--blue);
+    }
+    .fmt-toggle .caret {
+      width: 6px;
+      height: 6px;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: rotate(45deg);
+      transition: transform 0.15s;
+      display: inline-block;
+      margin-top: -2px;
+    }
+    .fmt-toggle[aria-expanded="true"] .caret {
+      transform: rotate(-135deg);
+      margin-top: 2px;
+    }
+    .fmt-panel {
+      display: none;
+      margin-top: 10px;
+    }
+    .fmt-panel.open {
+      display: block;
+    }
+    .fmt-item {
+      margin-bottom: 10px;
+    }
+    .fmt-item:last-child {
+      margin-bottom: 0;
+    }
+    .fmt-name {
+      display: block;
+      font-size: 0.64rem;
+      letter-spacing: 0.14em;
+      color: var(--ink-soft);
+      margin-bottom: 4px;
+    }
+    .fmt-panel pre {
+      background: var(--board);
+      border: 1px solid var(--blue-line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      line-height: 1.5;
+      color: var(--ink);
+      overflow-x: auto;
+      margin: 0;
+    }
+    .fmt-note {
+      font-size: 0.66rem;
+      color: var(--ink-soft);
+      margin-top: 8px;
+    }
+
+    /* ============ 焦点 & 响应式 ============ */
+    :focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 420px) {
+      .hero {
+        padding: 14px 8px 12px;
+      }
+      .hero-cell {
+        padding: 0 3px;
+      }
+      .chip {
+        padding: 4px 9px 5px;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <main class="station">
+      <!-- 蓝牌：站钟 -->
+      <header class="masthead">
+        <div class="clock" id="curTime">--:--:--</div>
+        <div class="masthead-date" id="curDate"></div>
+      </header>
+
+      <!-- 电子信息屏 -->
+      <section class="board">
+        <div class="route-field">
+          <span class="field-label" id="tLabel">时刻表</span>
+          <div class="dd" id="tableDropdown">
+            <button type="button" class="dd-head" id="tableHead" disabled
+              aria-haspopup="listbox" aria-expanded="false"
+              aria-labelledby="tLabel">
+              <span class="dd-value" id="tableValue">加载时刻表…</span>
+              <span class="dd-arrow" aria-hidden="true"></span>
+            </button>
+            <ul class="dd-list" id="tableList" role="listbox"
+              aria-labelledby="tLabel"></ul>
+          </div>
+        </div>
+
+        <div class="route-field">
+          <span class="field-label" id="ddLabel">线路</span>
+          <div class="dd" id="routeDropdown">
+            <button type="button" class="dd-head" id="ddHead" disabled
+              aria-haspopup="listbox" aria-expanded="false"
+              aria-labelledby="ddLabel">
+              <span class="dd-value" id="ddValue">请导入班次数据</span>
+              <span class="dd-arrow" aria-hidden="true"></span>
+            </button>
+            <ul class="dd-list" id="ddList" role="listbox"
+              aria-labelledby="ddLabel"></ul>
+          </div>
+        </div>
+
+        <div class="reverse-row">
+          <button type="button" class="btn-reverse" id="reverseBtn"
+            disabled>换方向</button>
+        </div>
+
+        <div class="hero" aria-live="polite">
+          <div class="hero-eyebrow"><span class="dot"></span>下一班</div>
+          <div class="hero-route" id="heroRoute">——</div>
+          <div class="hero-row">
+            <div class="hero-cell">
+              <span class="tag">发车时刻</span>
+              <span class="time" id="heroTime">--:--</span>
+            </div>
+            <div class="hero-cell">
+              <span class="tag">距发车</span>
+              <span class="chip" id="chip">
+                <span class="cd-num" id="cdNum">--</span>
+                <span class="cd-unit" id="cdUnit"></span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="departures">
+          <div class="dep-head">
+            <span>发车时刻</span>
+            <span class="count" id="depCount"></span>
+          </div>
+          <div class="list" id="scheduleList"></div>
+        </div>
+
+        <footer class="boardfoot">班次如有变动，以车站现场公告为准</footer>
+      </section>
+
+      <!-- 数据栏（导入） -->
+      <section class="notice">
+        <div class="notice-row">
+          <div class="file-wrap">
+            <span class="btn-file">选择JSON文件</span>
+            <input type="file" id="fileInput" accept=".json,application/json">
+          </div>
+          <button class="btn-clear" id="resetBtn">清空</button>
+          <button class="btn-share" id="shareBtn">分享</button>
+          <span class="file-status" id="fileStatus">尚未导入</span>
+        </div>
+        <button type="button" class="fmt-toggle" id="fmtToggle"
+          aria-expanded="false">
+            数据格式说明
+            <span class="caret" aria-hidden="true"></span>
+        </button>
+        <div class="fmt-panel" id="fmtPanel">
+          <div class="fmt-item">
+            <span class="fmt-name">data/index.json · 时刻表清单</span>
+            <pre>[
+  { "name": "站名", "file": "xxx.json", "hubCity": "本站城市(可省)" },
+  { "name": "远程站", "file": "https://example.com/xxx.json" }
+]</pre>
+          </div>
+          <div class="fmt-item">
+            <span class="fmt-name">时刻表 JSON · 每条班次一项</span>
+            <pre>[
+  { "route": "城A-城B", "time": "HH:MM", "note": "备注，可空" }
+]</pre>
+          </div>
+          <p
+            class="fmt-note">分享链接支持参数：?file=xxx.json&route=城A-城B。也可点击「选择JSON文件」手动导入。</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+    (function () {
+      "use strict";
+
+      /* ============================================================================
+         *  班车时刻表 · 通用模板配置
+         *  复制本文件到你的站点，改下面的 CONFIG 即可。
+         *
+         *  时刻表放在 data/ 文件夹，页面自动读取 data/index.json 清单：
+         *    [ { "name": "站名", "file": "xxx.json", "hubCity": "本站城市(可省)" }, ... ]
+         *  - file 支持三种：相对 data/ 的文件名（如 "xxx.json"）、子目录路径（如 "sub/xxx.json"）、
+         *    远程地址（如 "https://example.com/xxx.json" 或 "//example.com/xxx.json"）。
+         *  - 打开页面自动载入第一个时刻表；切换「时刻表」下拉即换用另一个文件。
+         *
+         *  线路数据（每条）：
+         *    { "route": "城A-城B", "time": "HH:MM", "note": "备注，可为空" }
+         *  - 线路用下拉选择，按"线路对"合并展示："城A-城B" 与 "城B-城A" 归为同一线路。
+         *  - 选中线路后，若数据中存在相反方向的班次，「换方向」按钮可切换；反之置灰。
+         *  - 两端都不含 hubCity 的过路/跨线线路同样会列出（无反向班次时按钮置灰）。
+         * ============================================================================ */
+      var CONFIG = {
+        stationName: "万载城北汽车站", // 用于浏览器标签页标题
+        hubCity: "万载", // 默认 hub 城市；可在清单中为每个时刻表单独指定
+        dataDir: "./data", // 时刻表 JSON 文件夹（含 index.json 清单）
+      };
+
+      var scheduleData = [];
+      var pairList = [];
+      var timetables = [];
+      var selectedTable = "";
+      var currentHub = CONFIG.hubCity;
+      var selectedKey = "";
+      var selectedSide = "";
+      var lastCountdownText = "";
+      var timerInterval = null;
+      var routeDd = null;
+      var tableDd = null;
+      var initialFileParam = getParam("file");
+      var initialRouteParam = getParam("route");
+      var appliedInitialRoute = false;
+
+      var fileInput = document.getElementById("fileInput");
+      var fileStatus = document.getElementById("fileStatus");
+      var resetBtn = document.getElementById("resetBtn");
+      var reverseBtn = document.getElementById("reverseBtn");
+      var curTime = document.getElementById("curTime");
+      var curDate = document.getElementById("curDate");
+      var ddHead = document.getElementById("ddHead");
+      var ddValue = document.getElementById("ddValue");
+      var ddList = document.getElementById("ddList");
+      var tableHead = document.getElementById("tableHead");
+      var tableValue = document.getElementById("tableValue");
+      var tableList = document.getElementById("tableList");
+      var heroRoute = document.getElementById("heroRoute");
+      var heroTime = document.getElementById("heroTime");
+      var chip = document.getElementById("chip");
+      var cdNum = document.getElementById("cdNum");
+      var cdUnit = document.getElementById("cdUnit");
+      var scheduleList = document.getElementById("scheduleList");
+      var depCount = document.getElementById("depCount");
+
+      /* ============ 工具 ============ */
+      function parseTimeToMinutes(timeStr) {
+        if (!timeStr || typeof timeStr !== "string") return -1;
+        var parts = timeStr.trim().split(":");
+        if (parts.length !== 2) return -1;
+        var h = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
+        if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return -1;
+        return h * 60 + m;
+      }
+
+      function pad(n) {
+        return String(n).padStart(2, "0");
+      }
+
+      function escapeHtml(text) {
+        if (!text) return "";
+        var div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function displayRoute(route) {
+        if (!route) return "——";
+        return route.replace("-", " → ");
+      }
+
+      /* ============ URL 参数 / 分享 ============ */
+      function getParam(name) {
+        var m = new RegExp("[?&]" + name + "=([^&]*)").exec(location.search);
+        return m ? decodeURIComponent(m[1].replace(/\+/g, " ")) : "";
+      }
+      function buildShareUrl() {
+        var params = [];
+        if (selectedTable) params.push("file=" + encodeURIComponent(selectedTable));
+        if (selectedSide) params.push("route=" + encodeURIComponent(selectedSide));
+        var base = location.href.split("?")[0];
+        return params.length ? base + "?" + params.join("&") : base;
+      }
+      function syncUrl() {
+        try {
+          history.replaceState(null, "", buildShareUrl());
+        } catch (_) {}
+      }
+
+      /* ============ 线路对 ============ */
+      function endpointA(route) {
+        var i = route.indexOf("-");
+        return i === -1 ? route : route.slice(0, i);
+      }
+      function endpointB(route) {
+        var i = route.indexOf("-");
+        return i === -1 ? "" : route.slice(i + 1);
+      }
+      function pairKey(route) {
+        var a = endpointA(route), b = endpointB(route);
+        if (a === b) return a;
+        return a < b ? a + "\u0000" + b : b + "\u0000" + a;
+      }
+      function directionOf(route) {
+        var hub = currentHub;
+        if (route.indexOf(hub + "-") === 0) return "dep";
+        if (route.lastIndexOf("-" + hub) === route.length - hub.length - 1) {
+          return "ret";
+        }
+        return "other";
+      }
+      function pairFor(key) {
+        for (var i = 0; i < pairList.length; i++) {
+          if (pairList[i].key === key) return pairList[i];
+        }
+        return null;
+      }
+      function preferredSide(pair) {
+        if (directionOf(pair.a) === "dep") return pair.a;
+        if (pair.b && directionOf(pair.b) === "dep") return pair.b;
+        return pair.a;
+      }
+      function buildPairs() {
+        var map = {};
+        for (var i = 0; i < scheduleData.length; i++) {
+          var r = scheduleData[i].route;
+          var k = pairKey(r);
+          if (!map[k]) map[k] = { a: r, b: null };
+          else if (r !== map[k].a) map[k].b = r;
+        }
+        pairList = Object.keys(map).sort().map(function (k) {
+          return { key: k, a: map[k].a, b: map[k].b };
+        });
+      }
+
+      /* ============ 自定义下拉（可复用） ============ */
+      function createDropdown(head, value, list, onSelect) {
+        var dd = list.parentElement;
+        var open = false;
+        function setOpen(o) {
+          open = o;
+          dd.classList.toggle("open", o);
+          head.setAttribute("aria-expanded", String(o));
+        }
+        function choose(key) {
+          var lis = list.querySelectorAll("li");
+          var label = key;
+          for (var i = 0; i < lis.length; i++) {
+            var sel = lis[i].dataset.key === key;
+            lis[i].setAttribute("aria-selected", sel ? "true" : "false");
+            lis[i].tabIndex = sel ? 0 : -1;
+            if (sel) label = lis[i].textContent;
+          }
+          value.textContent = label;
+          setOpen(false);
+          if (onSelect) onSelect(key);
+        }
+        head.addEventListener("click", function () {
+          if (head.disabled) return;
+          setOpen(!open);
+          if (open) {
+            var sel = list.querySelector('li[aria-selected="true"]');
+            if (sel) sel.focus();
+          }
+        });
+        head.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+            e.preventDefault();
+            if (!open) head.click();
+          }
+        });
+        list.addEventListener("keydown", function (e) {
+          var items = Array.prototype.slice.call(list.querySelectorAll("li"));
+          var idx = items.indexOf(document.activeElement);
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            if (items[idx + 1]) items[idx + 1].focus();
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            if (items[idx - 1]) items[idx - 1].focus();
+          } else if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (document.activeElement && document.activeElement.tagName === "LI") {
+              choose(document.activeElement.dataset.key);
+            }
+          } else if (e.key === "Escape") {
+            setOpen(false);
+            head.focus();
+          }
+        });
+        document.addEventListener("click", function (e) {
+          if (!dd.contains(e.target)) setOpen(false);
+        });
+        return {
+          setOptions: function (items, selectedKey) {
+            list.innerHTML = "";
+            value.textContent = "请选择";
+            if (!items || items.length === 0) {
+              head.disabled = true;
+              return;
+            }
+            head.disabled = false;
+            for (var i = 0; i < items.length; i++) {
+              var li = document.createElement("li");
+              li.dataset.key = items[i].key;
+              li.textContent = items[i].label;
+              var sel = items[i].key === selectedKey;
+              li.setAttribute("aria-selected", sel ? "true" : "false");
+              li.tabIndex = sel ? 0 : -1;
+              if (sel) value.textContent = items[i].label;
+              (function (k) {
+                li.addEventListener("click", function () {
+                  choose(k);
+                });
+              })(items[i].key);
+              list.appendChild(li);
+            }
+          },
+          setDisabled: function (dis) {
+            head.disabled = dis;
+            if (dis) setOpen(false);
+          },
+          setText: function (t) {
+            value.textContent = t;
+          },
+          close: function () {
+            setOpen(false);
+          },
+        };
+      }
+
+      function selectPair(key) {
+        if (!pairFor(key)) return;
+        selectedKey = key;
+        selectedSide = preferredSide(pairFor(key));
+        syncUrl();
+        refreshUI();
+      }
+
+      function populateRouteSelect() {
+        routeDd.setText("请导入班次数据");
+        if (scheduleData.length === 0 || pairList.length === 0) {
+          routeDd.setOptions([], "");
+          return;
+        }
+        if (pairFor(selectedKey) === null) {
+          selectedKey = pairList[0].key;
+          selectedSide = preferredSide(pairList[0]);
+        }
+        var items = pairList.map(function (p) {
+          return { key: p.key, label: endpointA(p.a) + " - " + endpointB(p.a) };
+        });
+        routeDd.setOptions(items, selectedKey);
+      }
+
+      /* ============ 时刻表 ============ */
+      function populateTableSelect() {
+        if (!timetables || timetables.length === 0) {
+          tableDd.setText("未找到时刻表");
+          tableDd.setOptions([], "");
+          fileStatus.textContent = "未在 " + CONFIG.dataDir +
+            "/index.json 中找到时刻表，可手动导入";
+          fileStatus.className = "file-status error";
+          return;
+        }
+        var items = timetables.map(function (t) {
+          return { key: t.file, label: t.name };
+        });
+        var exists = timetables.some(function (t) {
+          return t.file === selectedTable;
+        });
+        if (!exists) selectedTable = timetables[0].file;
+        tableDd.setOptions(items, selectedTable);
+      }
+
+      function loadTimetable(file) {
+        var entry = null;
+        for (var i = 0; i < timetables.length; i++) {
+          if (timetables[i].file === file) {
+            entry = timetables[i];
+            break;
+          }
+        }
+        if (!entry) return;
+        selectedTable = file;
+        fileStatus.textContent = "正在载入「" + entry.name + "」…";
+        fileStatus.className = "file-status";
+        fetch(resolveDataUrl(file), { cache: "no-store" })
+          .then(function (r) {
+            if (!r.ok) throw new Error("fetch");
+            return r.json();
+          })
+          .then(function (data) {
+            currentHub = (entry.hubCity) ? entry.hubCity : CONFIG.hubCity;
+            if (loadData(data)) {
+              if (!appliedInitialRoute && initialRouteParam) {
+                appliedInitialRoute = true;
+                var found = scheduleData.some(function (it) {
+                  return it.route === initialRouteParam;
+                });
+                if (found) {
+                  selectedSide = initialRouteParam;
+                  selectedKey = pairKey(initialRouteParam);
+                  populateRouteSelect();
+                  refreshUI();
+                }
+              }
+              syncUrl();
+              fileStatus.textContent = "已载入「" + entry.name + "」 " +
+                data.length + " 条班次";
+            }
+          })
+          .catch(function () {
+            fileStatus.textContent = "读取时刻表失败：" + file;
+            fileStatus.className = "file-status error";
+          });
+      }
+
+      /* 解析清单 file 字段：远程地址（http/https/协议相对）原样使用，本地文件拼到 dataDir 下并按段编码 */
+      function resolveDataUrl(file) {
+        if (/^(https?:)?\/\//i.test(file)) return file;
+        var parts = String(file).split("/").map(function (s) {
+          return encodeURIComponent(s);
+        });
+        return CONFIG.dataDir + "/" + parts.join("/");
+      }
+
+      function loadManifest() {
+        fetch(CONFIG.dataDir + "/index.json", { cache: "no-store" })
+          .then(function (r) {
+            return r.ok ? r.json() : null;
+          })
+          .then(function (list) {
+            timetables = (Array.isArray(list) && list.length > 0) ? list : [];
+            var hasFile = timetables.some(function (t) {
+              return t.file === initialFileParam;
+            });
+            selectedTable = hasFile ? initialFileParam : "";
+            populateTableSelect();
+            if (selectedTable) loadTimetable(selectedTable);
+          })
+          .catch(function () {
+            timetables = [];
+            populateTableSelect();
+          });
+      }
+
+      function getFilteredData() {
+        if (!selectedSide) return [];
+        return scheduleData.filter(function (item) {
+          return item.route === selectedSide;
+        });
+      }
+
+      function renderScheduleList() {
+        var filtered = getFilteredData();
+        if (filtered.length === 0) {
+          scheduleList.innerHTML = '<div class="empty">该方向暂无班次</div>';
+          depCount.textContent = "";
+          return;
+        }
+        var now = new Date();
+        var currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+        var nextDep = null;
+        var minDiff = Infinity;
+        for (var i = 0; i < filtered.length; i++) {
+          var dm = parseTimeToMinutes(filtered[i].time);
+          if (dm < 0) continue;
+          var diff = dm - currentMinutes;
+          if (diff < 0) diff += 1440;
+          if (diff < minDiff) {
+            minDiff = diff;
+            nextDep = filtered[i].time;
+          }
+        }
+
+        var sorted = filtered.slice().sort(function (a, b) {
+          return parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time);
+        });
+
+        var html = "";
+        for (var j = 0; j < sorted.length; j++) {
+          var item = sorted[j];
+          var dm2 = parseTimeToMinutes(item.time);
+          var past = dm2 < currentMinutes ? " past" : "";
+          var lit = (item.time === nextDep) ? " lit" : "";
+          var note = item.note
+            ? '<span class="note">' + escapeHtml(item.note) + "</span>"
+            : "";
+          html += '<div class="row' + past + lit + '" style="--i:' + j + '">' +
+            '<span class="time">' + escapeHtml(item.time) + "</span>" + note +
+            "</div>";
+        }
+        scheduleList.innerHTML = html;
+        depCount.textContent = sorted.length + " 班";
+      }
+
+      function updateReverseButton() {
+        var pair = pairFor(selectedKey);
+        var enabled = !!(pair && pair.b);
+        reverseBtn.disabled = !enabled;
+        if (enabled && pair.b) {
+          reverseBtn.title = displayRoute(pair.b);
+        } else {
+          reverseBtn.title = "";
+        }
+      }
+
+      function updateHero() {
+        var now = new Date();
+        var currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+        curTime.innerHTML = pad(now.getHours()) + '<span class="colon">:</span>' +
+          pad(now.getMinutes()) + '<span class="colon">:</span>' +
+          pad(now.getSeconds());
+        curDate.textContent = now.toLocaleDateString("zh-CN", {
+          month: "long",
+          day: "numeric",
+          weekday: "short",
+        });
+
+        var filtered = getFilteredData();
+        if (filtered.length === 0) {
+          heroRoute.textContent = "——";
+          heroTime.textContent = "--:--";
+          cdNum.textContent = "--";
+          cdUnit.textContent = "";
+          chip.classList.remove("urgent");
+          return;
+        }
+
+        var next = null, minDiff = Infinity;
+        for (var i = 0; i < filtered.length; i++) {
+          var dm = parseTimeToMinutes(filtered[i].time);
+          if (dm < 0) continue;
+          var diff = dm - currentMinutes;
+          if (diff < 0) diff += 1440;
+          if (diff < minDiff) {
+            minDiff = diff;
+            next = filtered[i];
+          }
+        }
+
+        if (!next) {
+          heroRoute.textContent = "——";
+          heroTime.textContent = "--:--";
+          cdNum.textContent = "--";
+          cdUnit.textContent = "";
+          chip.classList.remove("urgent");
+          return;
+        }
+
+        heroRoute.textContent = displayRoute(next.route);
+        heroTime.textContent = next.time;
+
+        var depMinutes = parseTimeToMinutes(next.time);
+        var diffMinutes = depMinutes - currentMinutes;
+        if (diffMinutes < 0) diffMinutes += 1440;
+
+        if (diffMinutes < 1) {
+          cdNum.textContent = "";
+          cdUnit.textContent = "即将发车";
+          cdUnit.style.fontSize = "1.25rem";
+          chip.classList.add("urgent");
+          lastCountdownText = "";
+        } else {
+          chip.classList.remove("urgent");
+          cdUnit.style.fontSize = "";
+          var text;
+          if (diffMinutes < 60) {
+            cdNum.textContent = String(diffMinutes);
+            cdUnit.textContent = "分钟";
+            text = String(diffMinutes);
+          } else {
+            var hours = Math.floor(diffMinutes / 60);
+            var mins = diffMinutes % 60;
+            cdNum.textContent = String(hours);
+            cdUnit.textContent = "小时" + (mins > 0 ? mins + "分" : "");
+            text = String(hours) + cdUnit.textContent;
+          }
+          if (text !== lastCountdownText) {
+            lastCountdownText = text;
+            cdNum.classList.remove("roll");
+            void cdNum.offsetWidth;
+            cdNum.classList.add("roll");
+          }
+        }
+      }
+
+      function refreshUI() {
+        renderScheduleList();
+        updateHero();
+        updateReverseButton();
+      }
+
+      function flip() {
+        var pair = pairFor(selectedKey);
+        if (!pair || !pair.b) return;
+        selectedSide = (selectedSide === pair.a) ? pair.b : pair.a;
+        syncUrl();
+        refreshUI();
+      }
+
+      function loadData(newData) {
+        if (!Array.isArray(newData) || newData.length === 0) {
+          fileStatus.textContent = "数据格式错误或为空";
+          fileStatus.className = "file-status error";
+          return false;
+        }
+        for (var i = 0; i < newData.length; i++) {
+          var item = newData[i];
+          if (!item.route || !item.time) {
+            fileStatus.textContent = "缺少 route 或 time 字段";
+            fileStatus.className = "file-status error";
+            return false;
+          }
+          if (parseTimeToMinutes(item.time) < 0) {
+            fileStatus.textContent = "时间格式错误：" + item.time;
+            fileStatus.className = "file-status error";
+            return false;
+          }
+        }
+        scheduleData = newData;
+        buildPairs();
+        selectedKey = "";
+        selectedSide = "";
+        fileStatus.textContent = "已载入 " + scheduleData.length + " 条班次";
+        fileStatus.className = "file-status";
+        populateRouteSelect();
+        refreshUI();
+        return true;
+      }
+
+      function clearData() {
+        scheduleData = [];
+        pairList = [];
+        selectedKey = "";
+        selectedSide = "";
+        fileStatus.textContent = "尚未导入";
+        fileStatus.className = "file-status";
+        fileInput.value = "";
+        routeDd.setText("请导入班次数据");
+        routeDd.setOptions([], "");
+        scheduleList.innerHTML = '<div class="empty">等待班次数据</div>';
+        depCount.textContent = "";
+        heroRoute.textContent = "——";
+        heroTime.textContent = "--:--";
+        cdNum.textContent = "--";
+        cdUnit.textContent = "";
+        chip.classList.remove("urgent");
+        reverseBtn.disabled = true;
+        reverseBtn.title = "";
+      }
+
+      function handleFile(file) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            loadData(JSON.parse(e.target.result));
+          } catch (_) {
+            fileStatus.textContent = "JSON 解析失败，请检查文件";
+            fileStatus.className = "file-status error";
+          }
+        };
+        reader.onerror = function () {
+          fileStatus.textContent = "读取文件失败";
+          fileStatus.className = "file-status error";
+        };
+        reader.readAsText(file, "UTF-8");
+      }
+
+      function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(updateHero, 1000);
+      }
+
+      /* ============ 初始化 ============ */
+      function init() {
+        document.title = CONFIG.stationName + " · 班车时刻表";
+
+        routeDd = createDropdown(ddHead, ddValue, ddList, function (key) {
+          selectPair(key);
+        });
+        tableDd = createDropdown(tableHead, tableValue, tableList, function (key) {
+          loadTimetable(key);
+        });
+
+        reverseBtn.addEventListener("click", flip);
+        document.getElementById("shareBtn").addEventListener("click", function () {
+          var text = buildShareUrl();
+          var done = function () {
+            var orig = this.textContent;
+            this.textContent = "已复制";
+            var self = this;
+            setTimeout(function () {
+              self.textContent = orig;
+            }, 1500);
+          }.bind(this);
+          function fallback() {
+            var ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+              document.execCommand("copy");
+            } catch (_) {}
+            document.body.removeChild(ta);
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, function () {
+              fallback();
+              done();
+            });
+          } else {
+            fallback();
+            done();
+          }
+        });
+        document.getElementById("fmtToggle").addEventListener("click", function () {
+          var open = document.getElementById("fmtPanel").classList.toggle("open");
+          this.setAttribute("aria-expanded", String(open));
+        });
+        fileInput.addEventListener("change", function (e) {
+          var file = this.files[0];
+          if (file) handleFile(file);
+        });
+        resetBtn.addEventListener("click", clearData);
+
+        startTimer();
+        loadManifest();
+      }
+
+      init();
+    })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BusTimeTable Cloud — 技术文档</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0C1929;
+      --bg-card: #132238;
+      --bg-card-alt: #1A2D47;
+      --bg-code: #0A1520;
+      --text: #F0EDE6;
+      --text-muted: #8B9AB5;
+      --text-dim: #5A6B80;
+      --accent: #D4963A;
+      --accent-glow: #D4963A33;
+      --accent-soft: #D4963A1A;
+      --border: #1E2D42;
+      --border-light: #2A3F5C;
+      --serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
+      --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      --mono: "JetBrains Mono", "Cascadia Mono", "Fira Code", Consolas, monospace;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      color-scheme: dark;
+      scroll-behavior: smooth;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-weight: 400;
+      min-height: 100vh;
+    }
+
+    /* ============ NAVIGATION ============ */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .nav-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      height: 56px;
+      gap: 32px;
+      overflow-x: auto;
+    }
+    .nav-brand {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .nav-links {
+      display: flex;
+      gap: 4px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .nav-links a:hover {
+      color: var(--text);
+      background: var(--accent-soft);
+    }
+
+    /* ============ HERO ============ */
+    .hero {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: clamp(48px, 8vw, 96px) 24px clamp(32px, 6vw, 64px);
+    }
+    .hero-eyebrow {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .hero-eyebrow::before {
+      content: "";
+      width: 32px;
+      height: 2px;
+      background: var(--accent);
+    }
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+    .hero-sub {
+      font-size: clamp(0.95rem, 2vw, 1.1rem);
+      color: var(--text-muted);
+      line-height: 1.8;
+      max-width: 600px;
+    }
+    .hero-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 28px;
+    }
+    .hero-tag {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 4px 10px;
+      letter-spacing: 0.06em;
+    }
+
+    /* ============ SECTION ============ */
+    .section {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .section + .section {
+      margin-top: 48px;
+    }
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+    }
+    .section-num {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 2px 8px;
+      flex-shrink: 0;
+    }
+    .section-title {
+      font-family: var(--serif);
+      font-size: clamp(1.3rem, 3vw, 1.7rem);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      margin-bottom: 24px;
+      line-height: 1.8;
+    }
+
+    /* ============ CARDS ============ */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: clamp(20px, 3vw, 28px);
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* ============ TABLE ============ */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 16px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    thead {
+      background: var(--bg-card-alt);
+    }
+    th {
+      text-align: left;
+      padding: 10px 16px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: top;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    tr:hover td {
+      background: var(--accent-soft);
+    }
+    td code, p code {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      background: var(--bg-code);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+    }
+
+    /* ============ CODE BLOCKS ============ */
+    .code-block {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+    .code-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: var(--bg-card-alt);
+      border-bottom: 1px solid var(--border);
+    }
+    .code-label {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+    .code-lang {
+      font-family: var(--mono);
+      font-size: 0.64rem;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+    pre {
+      padding: 16px;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: var(--text-muted);
+    }
+    pre .hl { color: var(--accent); font-weight: 600; }
+    pre .cm { color: var(--text-dim); }
+    pre .str { color: #7CB37C; }
+    pre .kw { color: #7BA4D4; }
+
+    /* ============ TREE ============ */
+    .tree {
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      line-height: 1.8;
+      color: var(--text-muted);
+    }
+    .tree .dir { color: var(--accent); font-weight: 600; }
+    .tree .file { color: var(--text); }
+    .tree .note { color: var(--text-dim); font-style: italic; }
+
+    /* ============ ARCHITECTURE DIAGRAM ============ */
+    .arch {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px;
+      margin: 20px 0;
+      overflow-x: auto;
+    }
+    .arch pre {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* ============ GRID ============ */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    /* ============ LIST ============ */
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+    .checklist li {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist .check {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1.5px solid var(--border-light);
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: var(--accent);
+    }
+    .checklist .check.done {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+
+    /* ============ PHASE TIMELINE ============ */
+    .timeline {
+      position: relative;
+      padding-left: 32px;
+    }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border);
+    }
+    .phase {
+      position: relative;
+      margin-bottom: 32px;
+    }
+    .phase:last-child { margin-bottom: 0; }
+    .phase-dot {
+      position: absolute;
+      left: -32px;
+      top: 4px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2px solid var(--accent);
+      z-index: 1;
+    }
+    .phase-dot.active {
+      background: var(--accent);
+    }
+    .phase-head {
+      font-family: var(--serif);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .phase-goal {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+    .phase .task-list {
+      list-style: none;
+      padding: 0;
+    }
+    .phase .task-list li {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      padding: 4px 0;
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+    }
+    .phase .task-list .task-id {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--accent);
+      flex-shrink: 0;
+      min-width: 32px;
+    }
+    .phase .task-list .task-desc {
+      color: var(--text-dim);
+      font-size: 0.76rem;
+    }
+
+    /* ============ FOOTER ============ */
+    .footer {
+      max-width: 960px;
+      margin: 64px auto 0;
+      padding: 32px 24px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    .footer p {
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      font-family: var(--mono);
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 640px) {
+      .nav-inner { gap: 16px; padding: 0 16px; }
+      .hero { padding: 36px 16px 28px; }
+      .section { padding: 0 16px; }
+      .card { padding: 16px; }
+      .arch { padding: 16px; }
+      .arch pre { font-size: 0.6rem; }
+      .grid-2 { grid-template-columns: 1fr; }
+      th, td { padding: 8px 10px; }
+    }
+
+    /* ============ FOCUS ============ */
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ============ SCROLLBAR ============ */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+    /* ============ FADE IN ============ */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <span class="nav-brand">BTTC</span>
+      <ul class="nav-links">
+        <li><a href="#overview">概述</a></li>
+        <li><a href="#stack">技术栈</a></li>
+        <li><a href="#structure">结构</a></li>
+        <li><a href="#kv">KV 数据</a></li>
+        <li><a href="#api">API</a></li>
+        <li><a href="#frontend">前端</a></li>
+        <li><a href="#auth">安全</a></li>
+        <li><a href="#deploy">部署</a></li>
+        <li><a href="#phases">阶段</a></li>
+        <li><a href="#checklist">验收</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-eyebrow">技术文档</div>
+    <h1>BusTimeTable <em>Cloud</em></h1>
+    <p class="hero-sub">
+      基于 Fresh + Preact + TypeScript + Deno KV 的全栈班车时刻表管理与电子屏展示系统。从 Hono 静态架构迁移至边缘优先的现代全栈方案。
+    </p>
+    <div class="hero-stack">
+      <span class="hero-tag">Fresh</span>
+      <span class="hero-tag">Preact</span>
+      <span class="hero-tag">TypeScript</span>
+      <span class="hero-tag">Deno KV</span>
+      <span class="hero-tag">Islands</span>
+    </div>
+  </header>
+
+  <!-- 1. OVERVIEW -->
+  <section id="overview" class="section fade-in">
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2 class="section-title">项目概述</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>现有项目</div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">
+          Hono 基础架构 + 静态 HTML 前端，手动路由与 JS 拼接。
+        </p>
+        <div class="code-block">
+          <div class="code-head">
+            <span class="code-label">项目结构</span>
+          </div>
+          <pre><span class="dir">BusTImeTable/</span>
+├── main.ts                       <span class="note"># Hono 服务入口</span>
+├── routes/                       <span class="note"># API 路由</span>
+├── middleware/                    <span class="note"># 认证、错误处理</span>
+├── static/
+│   ├── index.html                <span class="note"># 电子屏页面</span>
+│   └── admin/index.html          <span class="note"># 管理后台</span>
+└── data/                         <span class="note"># 原始 JSON 数据</span></pre>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>目标架构</div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">
+          Fresh 全栈架构，Preact 组件化，Islands 选择性水合。
+        </p>
+        <div class="arch">
+          <pre>
+        ┌──────────────────────────────────┐
+        │            浏览器                 │
+        │  ┌──────────┐  ┌──────────┐     │
+        │  │ /display │  │  /admin  │     │
+        │  └────┬─────┘  └────┬─────┘     │
+        └───────┼──────────────┼───────────┘
+                │              │
+        ┌───────┴──────────────┴───────────┐
+        │          Deno Deploy              │
+        │  ┌──────────────────────────┐    │
+        │  │        Fresh             │    │
+        │  │  routes/  islands/  lib/ │    │
+        │  └─────────────┬────────────┘    │
+        │  ┌─────────────┴────────────┐    │
+        │  │        Deno KV           │    │
+        │  │    全球边缘 KV 存储       │    │
+        │  └──────────────────────────┘    │
+        └──────────────────────────────────┘</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>核心原则</div>
+      <ul style="list-style:none;padding:0;">
+        <li style="padding:6px 0;font-size:0.85rem;color:var(--text-muted);display:flex;gap:10px;">
+          <span style="color:var(--accent);font-weight:700;">→</span>
+          全栈 Fresh 架构，页面使用 Preact/TSX 组件化开发
+        </li>
+        <li style="padding:6px 0;font-size:0.85rem;color:var(--text-muted);display:flex;gap:10px;">
+          <span style="color:var(--accent);font-weight:700;">→</span>
+          API 路由使用 Fresh 内置的 API 路由模式
+        </li>
+        <li style="padding:6px 0;font-size:0.85rem;color:var(--text-muted);display:flex;gap:10px;">
+          <span style="color:var(--accent);font-weight:700;">→</span>
+          交互使用 Fresh Islands 架构（选择性水合，零 JS 开销）
+        </li>
+        <li style="padding:6px 0;font-size:0.85rem;color:var(--text-muted);display:flex;gap:10px;">
+          <span style="color:var(--accent);font-weight:700;">→</span>
+          数据存储使用 Deno KV，无需外部数据库
+        </li>
+        <li style="padding:6px 0;font-size:0.85rem;color:var(--text-muted);display:flex;gap:10px;">
+          <span style="color:var(--accent);font-weight:700;">→</span>
+          TypeScript 全栈（前后端类型共享）
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 2. TECH STACK -->
+  <section id="stack" class="section fade-in">
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2 class="section-title">技术栈</h2>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>技术</th><th>用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Deno 2.x</code></td><td>运行时</td></tr>
+          <tr><td><code>Fresh</code></td><td>全栈 Web 框架（路由、SSR、中间件）</td></tr>
+          <tr><td><code>Preact</code></td><td>前端 UI 库（3KB，React 兼容 API）</td></tr>
+          <tr><td><code>TypeScript</code></td><td>全栈开发语言（前后端类型共享）</td></tr>
+          <tr><td><code>Deno KV</code></td><td>数据库（Deploy 内置边缘 KV）</td></tr>
+          <tr><td><code>JWT + PBKDF2</code></td><td>认证方案</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <div class="card-title"><span class="dot"></span>选择 Fresh 而非 Hono 的原因</div>
+      <div class="table-wrap" style="border:none;margin:0;">
+        <table>
+          <thead>
+            <tr><th>维度</th><th>Hono</th><th>Fresh</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>前端渲染</td><td>纯静态 HTML</td><td>SSR + Islands（选择性水合）</td></tr>
+            <tr><td>组件化</td><td>手动 HTML 拼接</td><td>Preact TSX 组件</td></tr>
+            <tr><td>路由</td><td>手动定义</td><td>文件系统路由（自动）</td></tr>
+            <tr><td>API + 页面</td><td>分离</td><td>同一框架内</td></tr>
+            <tr><td>交互</td><td>手动 JS</td><td>Islands 自动水合</td></tr>
+            <tr><td>类型安全</td><td>仅后端</td><td>前后端类型共享</td></tr>
+            <tr><td>Deno Deploy</td><td>支持</td><td>原生支持</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>前端策略</div>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">
+        不引入外部 UI 框架（如 Tailwind），保持轻量：
+      </p>
+      <ul style="list-style:none;padding:0;">
+        <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+          <span style="color:var(--accent);">•</span>项目已有成熟的 CSS 设计系统（深蓝 + 琥珀色调）
+        </li>
+        <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+          <span style="color:var(--accent);">•</span>组件数量有限（电子屏 + 管理后台）
+        </li>
+        <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+          <span style="color:var(--accent);">•</span>Zero 构建配置，Fresh 原生支持
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3. PROJECT STRUCTURE -->
+  <section id="structure" class="section fade-in">
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2 class="section-title">项目结构</h2>
+    </div>
+
+    <div class="code-block">
+      <div class="code-head">
+        <span class="code-label">BusTimeTableCloud/</span>
+        <span class="code-lang">目录树</span>
+      </div>
+      <pre><span class="dir">BusTimeTableCloud/</span>
+├── <span class="file">deno.json</span>                     <span class="note"># Deno + Fresh 配置</span>
+├── <span class="file">main.ts</span>                       <span class="note"># Fresh 入口</span>
+├── <span class="file">dev.ts</span>                        <span class="note"># 开发服务器入口</span>
+├── <span class="file">fresh.gen.ts</span>                  <span class="note"># Fresh 路由自动生成</span>
+│
+├── <span class="dir">routes/</span>                       <span class="note"># Fresh 文件系统路由</span>
+│   ├── <span class="file">_app.tsx</span>                  <span class="note"># 全局布局</span>
+│   ├── <span class="file">_middleware.ts</span>            <span class="note"># 全局中间件</span>
+│   ├── <span class="file">index.tsx</span>                 <span class="note"># 电子屏页面 /</span>
+│   ├── <span class="file">admin.tsx</span>                 <span class="note"># 管理后台 /admin</span>
+│   └── <span class="dir">api/</span>                      <span class="note"># API 路由</span>
+│       ├── <span class="dir">auth/</span>
+│       │   ├── <span class="file">login.ts</span>          <span class="note"># POST /api/auth/login</span>
+│       │   └── <span class="file">me.ts</span>             <span class="note"># GET /api/auth/me</span>
+│       ├── <span class="dir">stations/</span>
+│       │   ├── <span class="file">index.ts</span>          <span class="note"># GET/POST /api/stations</span>
+│       │   └── <span class="file">[id].ts</span>           <span class="note"># GET/PUT/DELETE /api/stations/:id</span>
+│       ├── <span class="dir">routes/</span>
+│       │   ├── <span class="file">[id].ts</span>           <span class="note"># GET/PUT/DELETE /api/routes/:id</span>
+│       │   └── <span class="dir">[id]/</span>
+│       │       └── <span class="file">schedules.ts</span>  <span class="note"># GET/POST /api/routes/:id/schedules</span>
+│       ├── <span class="dir">schedules/</span>
+│       │   └── <span class="dir">[routeId]/</span>
+│       │       └── <span class="file">[time].ts</span>     <span class="note"># PUT/DELETE /api/schedules/:routeId/:time</span>
+│       └── <span class="dir">display/</span>              <span class="note"># 公开展示接口</span>
+│           ├── <span class="file">stations.ts</span>       <span class="note"># GET /api/display/stations</span>
+│           └── <span class="dir">routes/</span>
+│               └── <span class="dir">[id]/</span>
+│                   └── <span class="file">schedules.ts</span>
+│
+├── <span class="dir">islands/</span>                      <span class="note"># Fresh Islands（交互组件）</span>
+│   ├── <span class="file">Clock.tsx</span>                 <span class="note"># 实时时钟</span>
+│   ├── <span class="file">StationSelect.tsx</span>         <span class="note"># 站点下拉</span>
+│   ├── <span class="file">RouteSelect.tsx</span>           <span class="note"># 线路下拉</span>
+│   ├── <span class="file">ScheduleList.tsx</span>          <span class="note"># 班次列表</span>
+│   ├── <span class="file">Countdown.tsx</span>             <span class="note"># 下一班倒计时</span>
+│   ├── <span class="file">ShareButton.tsx</span>           <span class="note"># 分享按钮</span>
+│   └── <span class="file">AdminPanel.tsx</span>            <span class="note"># 管理后台面板</span>
+│
+├── <span class="dir">components/</span>                   <span class="note"># 共享 UI 组件</span>
+│   ├── <span class="file">Masthead.tsx</span>              <span class="note"># 蓝牌站钟</span>
+│   ├── <span class="file">Hero.tsx</span>                  <span class="note"># 下一班英雄区</span>
+│   ├── <span class="file">Departures.tsx</span>            <span class="note"># 发车时刻表</span>
+│   └── <span class="file">Layout.tsx</span>                <span class="note"># 页面布局</span>
+│
+├── <span class="dir">lib/</span>
+│   ├── <span class="file">kv.ts</span>                     <span class="note"># Deno KV 连接封装</span>
+│   ├── <span class="file">schema.ts</span>                 <span class="note"># 类型定义（前后端共享）</span>
+│   └── <span class="file">auth.ts</span>                   <span class="note"># JWT + PBKDF2 工具函数</span>
+│
+├── <span class="dir">scripts/</span>
+│   └── <span class="file">seed.ts</span>                   <span class="note"># 初始化数据 + 从 JSON 迁移</span>
+│
+└── <span class="dir">static/</span>
+    ├── <span class="file">favicon.ico</span>
+    └── <span class="dir">data/</span>                     <span class="note"># 原始 JSON 数据</span></pre>
+    </div>
+  </section>
+
+  <!-- 4. KV DATA -->
+  <section id="kv" class="section fade-in">
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <h2 class="section-title">Deno KV 数据设计</h2>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>KV Key 命名规范</div>
+      <div class="code-block" style="margin:0;">
+        <div class="code-head">
+          <span class="code-label">Key 命名</span>
+          <span class="code-lang">KV Schema</span>
+        </div>
+        <pre><span class="cm">// 站点</span>
+[<span class="str">"stations"</span>, id]
+
+<span class="cm">// 线路</span>
+[<span class="str">"routes"</span>, id]
+
+<span class="cm">// 班次</span>
+[<span class="str">"schedules"</span>, routeId, time]
+
+<span class="cm">// 用户</span>
+[<span class="str">"users"</span>, username]
+
+<span class="cm">// 系统配置</span>
+[<span class="str">"settings"</span>, key]</pre>
+      </div>
+    </div>
+
+    <p class="section-desc" style="margin-top:16px;">
+      类型定义（Station、Route、Schedule、User、Setting）保持原有设计不变，通过 <code>lib/schema.ts</code> 前后端共享。
+    </p>
+  </section>
+
+  <!-- 5. API -->
+  <section id="api" class="section fade-in">
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <h2 class="section-title">API 设计</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>认证</div>
+        <div class="table-wrap" style="border:none;margin:0;">
+          <table>
+            <thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td><code>POST</code></td><td>/api/auth/login</td><td>登录，返回 JWT</td></tr>
+              <tr><td><code>GET</code></td><td>/api/auth/me</td><td>当前用户信息</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>站点</div>
+        <div class="table-wrap" style="border:none;margin:0;">
+          <table>
+            <thead><tr><th>方法</th><th>路径</th></tr></thead>
+            <tbody>
+              <tr><td><code>GET</code></td><td>/api/stations</td></tr>
+              <tr><td><code>GET</code></td><td>/api/stations/:id</td></tr>
+              <tr><td><code>POST</code></td><td>/api/stations</td></tr>
+              <tr><td><code>PUT</code></td><td>/api/stations/:id</td></tr>
+              <tr><td><code>DELETE</code></td><td>/api/stations/:id</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:16px;">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>线路</div>
+        <div class="table-wrap" style="border:none;margin:0;">
+          <table>
+            <thead><tr><th>方法</th><th>路径</th></tr></thead>
+            <tbody>
+              <tr><td><code>GET</code></td><td>/api/routes</td></tr>
+              <tr><td><code>GET</code></td><td>/api/stations/:stationId/routes</td></tr>
+              <tr><td><code>GET</code></td><td>/api/routes/:id</td></tr>
+              <tr><td><code>POST</code></td><td>/api/stations/:stationId/routes</td></tr>
+              <tr><td><code>PUT</code></td><td>/api/routes/:id</td></tr>
+              <tr><td><code>DELETE</code></td><td>/api/routes/:id</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>班次</div>
+        <div class="table-wrap" style="border:none;margin:0;">
+          <table>
+            <thead><tr><th>方法</th><th>路径</th></tr></thead>
+            <tbody>
+              <tr><td><code>GET</code></td><td>/api/routes/:routeId/schedules</td></tr>
+              <tr><td><code>POST</code></td><td>/api/routes/:routeId/schedules</td></tr>
+              <tr><td><code>POST</code></td><td>/api/routes/:routeId/schedules/batch</td></tr>
+              <tr><td><code>PUT</code></td><td>/api/schedules/:routeId/:time</td></tr>
+              <tr><td><code>DELETE</code></td><td>/api/schedules/:routeId/:time</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title"><span class="dot"></span>前台展示接口（免认证）</div>
+      <div class="table-wrap" style="border:none;margin:0;">
+        <table>
+          <thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td><code>GET</code></td><td>/api/display/stations</td><td>站点列表</td></tr>
+            <tr><td><code>GET</code></td><td>/api/display/stations/:stationId/routes</td><td>站点下线路</td></tr>
+            <tr><td><code>GET</code></td><td>/api/display/routes/:routeId/schedules</td><td>线路下班次</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title"><span class="dot"></span>统一响应格式</div>
+      <div class="code-block" style="margin:0;">
+        <div class="code-head">
+          <span class="code-label">JSON Response</span>
+          <span class="code-lang">JSON</span>
+        </div>
+        <pre><span class="cm">// 成功</span>
+{ <span class="str">"ok"</span>: <span class="hl">true</span>,  <span class="str">"data"</span>: { ... }, <span class="str">"error"</span>: <span class="hl">null</span> }
+
+<span class="cm">// 失败</span>
+{ <span class="str">"ok"</span>: <span class="hl">false</span>, <span class="str">"data"</span>: <span class="hl">null</span>,
+  <span class="str">"error"</span>: { <span class="str">"code"</span>: <span class="str">"NOT_FOUND"</span>, <span class="str">"message"</span>: <span class="str">"站点不存在"</span> } }</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. FRONTEND -->
+  <section id="frontend" class="section fade-in">
+    <div class="section-head">
+      <span class="section-num">06</span>
+      <h2 class="section-title">前端设计</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>电子屏页面 <code style="font-size:0.76rem;">/</code></div>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px;">
+          使用 Preact 组件 + Islands 重构现有电子屏。
+        </p>
+        <div class="table-wrap" style="border:none;margin:0;">
+          <table>
+            <thead><tr><th>功能</th><th>组件</th></tr></thead>
+            <tbody>
+              <tr><td>站钟</td><td><code>Clock.tsx</code> Island</td></tr>
+              <tr><td>站点选择</td><td><code>StationSelect.tsx</code></td></tr>
+              <tr><td>线路选择</td><td><code>RouteSelect.tsx</code></td></tr>
+              <tr><td>下一班倒计时</td><td><code>Countdown.tsx</code></td></tr>
+              <tr><td>班次列表</td><td><code>ScheduleList.tsx</code></td></tr>
+              <tr><td>分享按钮</td><td><code>ShareButton.tsx</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Islands 策略</div>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px;">
+          选择性水合，按需加载交互。
+        </p>
+        <ul style="list-style:none;padding:0;">
+          <li style="padding:6px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+            <span style="color:var(--accent);">→</span>
+            <strong style="color:var(--text);">静态部分</strong>：布局、标题、页脚直接服务端渲染，零 JS
+          </li>
+          <li style="padding:6px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+            <span style="color:var(--accent);">→</span>
+            <strong style="color:var(--text);">动态部分</strong>：时钟、倒计时、下拉交互 — Islands，按需水合
+          </li>
+          <li style="padding:6px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+            <span style="color:var(--accent);">→</span>
+            <strong style="color:var(--text);">数据加载</strong>：Islands 内调用 API 路由
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title"><span class="dot"></span>管理后台 <code style="font-size:0.76rem;">/admin</code></div>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px;">
+        使用 Preact 组件构建管理界面，所有操作通过 Fresh API 路由完成，JWT 存储在 localStorage。
+      </p>
+      <div class="grid-2" style="margin:0;">
+        <ul style="list-style:none;padding:0;">
+          <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);">
+            <code>AdminLogin.tsx</code> — 登录表单
+          </li>
+          <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);">
+            <code>AdminDashboard.tsx</code> — 站点/线路/班次统计
+          </li>
+        </ul>
+        <ul style="list-style:none;padding:0;">
+          <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);">
+            <code>StationManager.tsx</code> — 站点 CRUD
+          </li>
+          <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);">
+            <code>RouteManager.tsx</code> — 线路 CRUD
+          </li>
+          <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);">
+            <code>ScheduleManager.tsx</code> — 班次 CRUD + 批量导入
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. AUTH -->
+  <section id="auth" class="section fade-in">
+    <div class="section-head">
+      <span class="section-num">07</span>
+      <h2 class="section-title">认证与安全</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>JWT 认证</div>
+        <ul style="list-style:none;padding:0;">
+          <li style="padding:5px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+            <span style="color:var(--accent);">•</span>使用 Fresh 中间件 <code>_middleware.ts</code> 统一处理
+          </li>
+          <li style="padding:5px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+            <span style="color:var(--accent);">•</span>Token 有效期 7 天
+          </li>
+          <li style="padding:5px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+            <span style="color:var(--accent);">•</span>仅管理接口需要认证，展示接口免认证
+          </li>
+          <li style="padding:5px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+            <span style="color:var(--accent);">•</span>密码使用 PBKDF2 + SHA-256 哈希
+          </li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>权限模型</div>
+        <div class="table-wrap" style="border:none;margin:0;">
+          <table>
+            <thead><tr><th>角色</th><th>站点</th><th>线路</th><th>班次</th><th>用户管理</th></tr></thead>
+            <tbody>
+              <tr><td><code>admin</code></td><td>CRUD</td><td>CRUD</td><td>CRUD</td><td>CRUD</td></tr>
+              <tr><td><code>editor</code></td><td>只读</td><td>CRUD</td><td>CRUD</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. DEPLOY -->
+  <section id="deploy" class="section fade-in">
+    <div class="section-head">
+      <span class="section-num">08</span>
+      <h2 class="section-title">部署与开发</h2>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>deno.json 配置</div>
+        <div class="code-block" style="margin:0;">
+          <div class="code-head">
+            <span class="code-label">配置文件</span>
+            <span class="code-lang">JSON</span>
+          </div>
+          <pre>{
+  <span class="str">"tasks"</span>: {
+    <span class="str">"start"</span>: <span class="str">"deno run -A main.ts"</span>,
+    <span class="str">"dev"</span>:   <span class="str">"deno run -A --watch main.ts dev"</span>,
+    <span class="str">"seed"</span>:  <span class="str">"deno run -A scripts/seed.ts"</span>,
+    <span class="str">"fmt"</span>:   <span class="str">"deno fmt"</span>,
+    <span class="str">"lint"</span>:  <span class="str">"deno lint"</span>,
+    <span class="str">"check"</span>: <span class="str">"deno check main.ts"</span>
+  },
+  <span class="str">"compilerOptions"</span>: {
+    <span class="str">"jsx"</span>: <span class="str">"precompile"</span>,
+    <span class="str">"jsxImportSource"</span>: <span class="str">"preact"</span>
+  }
+}</pre>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>部署步骤</div>
+        <ol style="padding-left:20px;">
+          <li style="padding:5px 0;font-size:0.82rem;color:var(--text-muted);">推送代码到 GitHub</li>
+          <li style="padding:5px 0;font-size:0.82rem;color:var(--text-muted);">在 <code>dash.deno.com</code> 创建项目，关联仓库</li>
+          <li style="padding:5px 0;font-size:0.82rem;color:var(--text-muted);">Deno Deploy 自动检测 Fresh 项目并构建</li>
+          <li style="padding:5px 0;font-size:0.82rem;color:var(--text-muted);">首次部署后执行 <code>deno task seed</code> 初始化数据</li>
+          <li style="padding:5px 0;font-size:0.82rem;color:var(--text-muted);">Deno KV 自动启用</li>
+        </ol>
+
+        <div style="margin-top:20px;">
+          <div class="card-title" style="margin-bottom:8px;"><span class="dot"></span>本地开发</div>
+          <div class="code-block" style="margin:0;">
+            <pre><span class="cm"># 启动开发服务器</span>
+<span class="kw">deno task dev</span>
+
+<span class="cm"># 初始化数据</span>
+<span class="kw">deno task seed</span>
+
+<span class="cm"># 格式化 / 检查 / 类型检查</span>
+<span class="kw">deno task fmt</span>  <span class="kw">deno task lint</span>  <span class="kw">deno task check</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title"><span class="dot"></span>性能设计</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+        <div style="text-align:center;padding:16px;">
+          <div style="font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);">&lt;50ms</div>
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-top:4px;">冷启动时间</div>
+        </div>
+        <div style="text-align:center;padding:16px;">
+          <div style="font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);">&lt;100ms</div>
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-top:4px;">API 响应时间</div>
+        </div>
+        <div style="text-align:center;padding:16px;">
+          <div style="font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);">0 KB</div>
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-top:4px;">静态页 JS 开销</div>
+        </div>
+        <div style="text-align:center;padding:16px;">
+          <div style="font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);">3 KB</div>
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-top:4px;">Preact 运行时</div>
+        </div>
+      </div>
+      <ul style="list-style:none;padding:0;margin-top:12px;">
+        <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+          <span style="color:var(--accent);">•</span>Fresh SSR 首次加载即显示内容，无需等待 JS 加载
+        </li>
+        <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+          <span style="color:var(--accent);">•</span>Islands 按需水合，交互组件才下载 JS
+        </li>
+        <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+          <span style="color:var(--accent);">•</span>Deno KV 全球边缘读取
+        </li>
+        <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+          <span style="color:var(--accent);">•</span>前端 30 秒轮询刷新
+        </li>
+        <li style="padding:4px 0;font-size:0.82rem;color:var(--text-muted);display:flex;gap:8px;">
+          <span style="color:var(--accent);">•</span>静态文件由 Deploy CDN 缓存
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 9. PHASES -->
+  <section id="phases" class="section fade-in">
+    <div class="section-head">
+      <span class="section-num">09</span>
+      <h2 class="section-title">分阶段任务</h2>
+    </div>
+
+    <div class="timeline">
+      <!-- Phase 0 -->
+      <div class="phase">
+        <div class="phase-dot active"></div>
+        <div class="phase-head">阶段 0：Fresh 项目初始化</div>
+        <div class="phase-goal">搭建 Fresh 项目骨架，API 路由就绪。</div>
+        <ul class="task-list">
+          <li><span class="task-id">0.1</span>初始化 Fresh 项目 <span class="task-desc">deno run -A https://deno.land/x/fresh/init.ts</span></li>
+          <li><span class="task-id">0.2</span>配置 deno.json <span class="task-desc">Fresh + Preact 依赖、tasks</span></li>
+          <li><span class="task-id">0.3</span>创建 lib/kv.ts <span class="task-desc">KV 连接封装</span></li>
+          <li><span class="task-id">0.4</span>创建 lib/schema.ts <span class="task-desc">类型定义</span></li>
+          <li><span class="task-id">0.5</span>创建 lib/auth.ts <span class="task-desc">JWT + PBKDF2 工具函数</span></li>
+          <li><span class="task-id">0.6</span>创建 _middleware.ts <span class="task-desc">认证 + 错误处理中间件</span></li>
+          <li><span class="task-id">0.7</span>创建 API 路由骨架 <span class="task-desc">所有 API 路由返回 501</span></li>
+        </ul>
+      </div>
+
+      <!-- Phase 1 -->
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-head">阶段 1：数据层 + 展示 API</div>
+        <div class="phase-goal">数据迁移与前端展示。</div>
+        <ul class="task-list">
+          <li><span class="task-id">1.1</span>编写 seed.ts <span class="task-desc">从 JSON 迁移到 KV</span></li>
+          <li><span class="task-id">1.2</span>实现展示 API <span class="task-desc">display/stations、routes、schedules</span></li>
+          <li><span class="task-id">1.3</span>实现电子屏页面 <span class="task-desc">Preact 组件 + Islands</span></li>
+          <li><span class="task-id">1.4</span>实现分享功能 <span class="task-desc">复制链接 + URL 参数</span></li>
+          <li><span class="task-id">1.5</span>实现自动刷新 <span class="task-desc">30 秒轮询</span></li>
+        </ul>
+      </div>
+
+      <!-- Phase 2 -->
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-head">阶段 2：管理后台</div>
+        <div class="phase-goal">CRUD 管理界面。</div>
+        <ul class="task-list">
+          <li><span class="task-id">2.1</span>实现登录 API <span class="task-desc">POST /api/auth/login、GET /api/auth/me</span></li>
+          <li><span class="task-id">2.2</span>实现站点 CRUD API</li>
+          <li><span class="task-id">2.3</span>实现线路 CRUD API</li>
+          <li><span class="task-id">2.4</span>实现班次 CRUD API</li>
+          <li><span class="task-id">2.5</span>实现批量导入 API <span class="task-desc">POST /api/routes/:id/schedules/batch</span></li>
+          <li><span class="task-id">2.6</span>实现管理后台页面 <span class="task-desc">Preact 管理面板组件</span></li>
+          <li><span class="task-id">2.7</span>联调验证 <span class="task-desc">所有 CRUD 可正常执行</span></li>
+        </ul>
+      </div>
+
+      <!-- Phase 3 -->
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-head">阶段 3：部署上线</div>
+        <div class="phase-goal">发布到 Deno Deploy。</div>
+        <ul class="task-list">
+          <li><span class="task-id">3.1</span>推送 GitHub</li>
+          <li><span class="task-id">3.2</span>创建 Deploy 项目 <span class="task-desc">Deno Deploy 关联仓库</span></li>
+          <li><span class="task-id">3.3</span>执行 seed 脚本 <span class="task-desc">初始化数据</span></li>
+          <li><span class="task-id">3.4</span>验证线上功能</li>
+          <li><span class="task-id">3.5</span>绑定域名 <span class="task-desc">可选</span></li>
+        </ul>
+      </div>
+
+      <!-- Phase 4 -->
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-head">阶段 4：优化与完善</div>
+        <div class="phase-goal">生产加固与体验优化。</div>
+        <ul class="task-list">
+          <li><span class="task-id">4.1</span>添加 rate-limit <span class="task-desc">API 限流</span></li>
+          <li><span class="task-id">4.2</span>添加操作日志 <span class="task-desc">KV 记录管理员操作</span></li>
+          <li><span class="task-id">4.3</span>电子屏 PWA <span class="task-desc">Service Worker 离线缓存</span></li>
+          <li><span class="task-id">4.4</span>管理后台响应式 <span class="task-desc">适配手机/平板</span></li>
+          <li><span class="task-id">4.5</span>数据导出 <span class="task-desc">JSON 导出</span></li>
+          <li><span class="task-id">4.6</span>错误监控 <span class="task-desc">Sentry 或自建上报</span></li>
+        </ul>
+      </div>
+
+      <!-- Phase 5 -->
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-head">阶段 5（远期可选）</div>
+        <div class="phase-goal">WebSocket 实时推送、微信小程序、LED 屏适配、数据统计。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. CHECKLIST -->
+  <section id="checklist" class="section fade-in">
+    <div class="section-head">
+      <span class="section-num">10</span>
+      <h2 class="section-title">验收标准</h2>
+    </div>
+
+    <div class="card">
+      <ul class="checklist">
+        <li><span class="check">☐</span>电子屏页面正常显示，数据从 KV 加载</li>
+        <li><span class="check">☐</span>实时时钟 + 下一班倒计时功能正常</li>
+        <li><span class="check">☐</span>线路切换 + 方向切换正常</li>
+        <li><span class="check">☐</span>管理后台可登录</li>
+        <li><span class="check">☐</span>站点/线路/班次 CRUD 正常</li>
+        <li><span class="check">☐</span>Deno Deploy 可访问</li>
+        <li><span class="check">☐</span>无需外部数据库</li>
+        <li><span class="check">☐</span>冷启动 &lt; 50ms</li>
+        <li><span class="check">☐</span>API 响应 &lt; 100ms</li>
+        <li><span class="check">☐</span>HTTPS 自动启用</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>BusTimeTable Cloud — 技术文档</p>
+    <p style="margin-top:4px;">Fresh + Preact + Deno KV</p>
+  </footer>
+
+  <script>
+    (function () {
+      var sections = document.querySelectorAll('.fade-in');
+      if (!('IntersectionObserver' in window)) {
+        sections.forEach(function (el) { el.classList.add('visible'); });
+        return;
+      }
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.08 });
+      sections.forEach(function (el) { observer.observe(el); });
+    })();
+  </script>
+</body>
+</html>
