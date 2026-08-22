@@ -10,7 +10,7 @@ export default define.page(function App({ Component }) {
           content="width=device-width, initial-scale=1.0, user-scalable=no"
         />
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-        <title>BusTimeTable · 班车时刻表</title>
+        <title>万载城北汽车站 · 班车时刻表</title>
       </head>
       <body>
         <Component />

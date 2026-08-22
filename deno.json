@@ -1,8 +1,8 @@
 {
   "nodeModulesDir": "manual",
   "tasks": {
-    "start": "deno serve -A _fresh/server.js",
-    "dev": "vite",
+    "start": "deno serve -A --unstable-kv _fresh/server.js",
+    "dev": "deno run -A --unstable-kv npm:vite",
     "build": "vite build",
     "seed": "deno run --unstable-kv -A scripts/seed.ts",
     "fmt": "deno fmt",

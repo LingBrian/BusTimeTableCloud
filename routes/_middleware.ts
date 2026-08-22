@@ -7,15 +7,25 @@ export const handler = define.middleware(async (ctx) => {
     const url = new URL(ctx.req.url);
     const path = url.pathname;
 
-    // Skip auth for public endpoints
-    if (
-      path.startsWith("/api/display/") || path.startsWith("/api/auth/login")
-    ) {
+    const method = ctx.req.method;
+
+    // Public read-only endpoints (GET only, no auth required)
+    const publicReadPatterns = [
+      "/api/display/",
+      "/api/auth/login",
+      "/api/stations",
+      "/api/routes",
+      "/api/schedules",
+    ];
+    const isPublicRead = method === "GET" &&
+      publicReadPatterns.some((p) => path.startsWith(p));
+
+    if (path.startsWith("/api/display/") || path.startsWith("/api/auth/login") || isPublicRead) {
       ctx.state.user = null;
       return await ctx.next();
     }
 
-    // Check JWT for admin API routes
+    // All write operations and /api/auth/me require JWT
     if (path.startsWith("/api/")) {
       const authHeader = ctx.req.headers.get("Authorization");
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
