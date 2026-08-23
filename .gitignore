@@ -16,3 +16,6 @@ vendor/
 admin.html
 *.log.dev.*
 
+# production seed script (contains Deploy KV database id)
+scripts/seed-prod.cmd
+
