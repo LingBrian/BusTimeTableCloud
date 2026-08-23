@@ -465,194 +465,105 @@ main.station {
   text-align: center;
 }
 
-/* ============ 数据栏（导入） ============ */
+/* ============ 底部操作栏：分享 + 状态 ============ */
 .notice {
-  margin-top: 16px;
-  background: #e9f1fc;
-  border: 1px solid #c8d9f2;
-  border-radius: 8px;
-  padding: 12px 16px;
-  color: #13233c;
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
 }
-.notice-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-.file-wrap {
-  position: relative;
-  display: inline-block;
-}
-.file-wrap input[type="file"] {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
+.btn-share {
   width: 100%;
-  height: 100%;
-}
-.btn-file {
-  display: inline-block;
-  background: #0c3c8f;
-  color: #fff;
   font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", system-ui, sans-serif;
   font-size: 0.8rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  padding: 8px 18px;
-  border-radius: 6px;
-  pointer-events: none;
-}
-.btn-clear {
-  border: 1px solid #c8d9f2;
-  background: #ffffff;
-  color: #5c6c84;
-  font-size: 0.72rem;
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", system-ui, sans-serif;
-}
-.btn-clear:hover {
-  color: #1a63c9;
-  border-color: #1a63c9;
-}
-.btn-share {
-  border: 1px solid #c8d9f2;
-  background: #ffffff;
+  letter-spacing: 0.14em;
   color: #0c3c8f;
-  font-size: 0.72rem;
-  padding: 6px 14px;
-  border-radius: 6px;
+  background: #ffffff;
+  border: 1.5px dashed #c8d9f2;
+  border-radius: 8px;
+  padding: 11px 14px;
   cursor: pointer;
-  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", system-ui, sans-serif;
+  text-align: center;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
 }
 .btn-share:hover {
-  color: #1a63c9;
   border-color: #1a63c9;
+  color: #1a63c9;
+  background: #e9f1fc;
+}
+.btn-share:focus-visible {
+  border-color: #1a63c9;
+  box-shadow: 0 0 0 3px #e9f1fc;
 }
 .file-status {
-  font-size: 0.72rem;
-  color: #5c6c84;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: #98a7bd;
+  text-align: center;
 }
 .file-status.error {
   color: #d92b33;
   font-weight: 700;
 }
-.fmt-toggle {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 12px;
-  border: none;
-  background: none;
-  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", system-ui, sans-serif;
-  font-size: 0.72rem;
-  color: #5c6c84;
-  cursor: pointer;
-  padding: 2px 0;
-}
-.fmt-toggle:hover {
-  color: #1a63c9;
-}
-.fmt-toggle .caret {
-  width: 6px;
-  height: 6px;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  transform: rotate(45deg);
-  transition: transform 0.15s;
-  display: inline-block;
-  margin-top: -2px;
-}
-.fmt-toggle[aria-expanded="true"] .caret {
-  transform: rotate(-135deg);
-  margin-top: 2px;
-}
-.fmt-panel {
-  display: none;
-  margin-top: 10px;
-}
-.fmt-panel.open {
-  display: block;
-}
-.fmt-item {
-  margin-bottom: 10px;
-}
-.fmt-item:last-child {
-  margin-bottom: 0;
-}
-.fmt-name {
-  display: block;
-  font-size: 0.64rem;
-  letter-spacing: 0.14em;
-  color: #5c6c84;
-  margin-bottom: 4px;
-}
-.fmt-panel pre {
-  background: #ffffff;
-  border: 1px solid #c8d9f2;
-  border-radius: 6px;
-  padding: 8px 10px;
-  font-family: "Cascadia Mono", "JetBrains Mono", Consolas, Menlo, "Courier New", monospace;
-  font-size: 0.7rem;
-  line-height: 1.5;
-  color: #13233c;
-  overflow-x: auto;
-  margin: 0;
-}
-.fmt-note {
-  font-size: 0.66rem;
-  color: #5c6c84;
-  margin-top: 8px;
-}
 
-/* ============ 首页站点索引（SEO 内链） ============ */
+/* ============ 车站线路索引（电子屏下联卡片） ============ */
 .agg {
-  margin-top: 18px;
+  margin-top: 10px;
+  background: #ffffff;
+  border: 1px solid #dfe7f2;
+  border-radius: 10px;
+  box-shadow: 0 18px 44px rgba(15, 42, 90, 0.14), 0 6px 18px rgba(15, 42, 90, 0.08);
+  padding: 14px 16px 16px;
 }
-.agg-title, .agg h2 {
-  text-align: center;
-  font-size: 0.78rem;
-  letter-spacing: 0.14em;
-  color: #98a7bd;
+.agg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.64rem;
+  letter-spacing: 0.5em;
+  color: #5c6c84;
 }
-.agg-sub {
-  text-align: center;
-  font-size: 0.7rem;
+.agg-head h2 {
+  font-size: inherit;
+  font-weight: 400;
+  letter-spacing: inherit;
+  color: inherit;
+}
+.agg-count {
+  font-family: "Cascadia Mono", "JetBrains Mono", Consolas, Menlo, "Courier New", monospace;
+  font-feature-settings: "tnum";
+  letter-spacing: 0.08em;
   color: #98a7bd;
-  margin-top: 6px;
 }
 .agg-list {
   margin-top: 12px;
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 8px;
 }
 .agg-list li {
-  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: #f6f9fd;
   border: 1px solid #dfe7f2;
   border-radius: 8px;
-  padding: 10px 14px;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  padding: 10px 12px;
 }
 .agg-list a {
   color: #1a63c9;
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   text-decoration: none;
 }
 .agg-list a:hover {
   text-decoration: underline;
   color: #0c3c8f;
 }
-.agg-list span {
-  font-size: 0.7rem;
+.agg-list .agg-city {
+  font-size: 0.68rem;
   color: #98a7bd;
 }
 

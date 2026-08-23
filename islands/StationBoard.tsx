@@ -1,3 +1,4 @@
+import type { ComponentChildren } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 /* ===== Types ===== */
@@ -343,7 +344,9 @@ function HeroSection(
 }
 
 /* ===== Main Island ===== */
-export default function StationBoard() {
+export default function StationBoard(
+  { children }: { children?: ComponentChildren },
+) {
   /* ---- State ---- */
   const [stations, setStations] = useState<Station[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -494,7 +497,8 @@ export default function StationBoard() {
     if (selectedRouteIdRef.current) {
       params.set("route", selectedRouteIdRef.current);
     }
-    const base = location.href.split("?")[0];
+    // 分享主页面绝对链接（带当前访问域名），附带站点、线路与方向（对向线路为独立 route id）
+    const base = location.origin + "/";
     return params.toString() ? base + "?" + params.toString() : base;
   }
 
@@ -698,14 +702,16 @@ export default function StationBoard() {
         <footer class="boardfoot">班次如有变动，以车站现场公告为准</footer>
       </section>
 
-      {/* 数据栏 */}
+      {children}
+
+      {/* 底部操作栏 */}
       <section class="notice">
-        <div class="notice-row">
-          <button class="btn-share" onClick={handleShare}>分享</button>
-          <span class={`file-status${statusErr ? " error" : ""}`}>
-            {statusMsg}
-          </span>
-        </div>
+        <button type="button" class="btn-share" onClick={handleShare}>
+          分享
+        </button>
+        <span class={`file-status${statusErr ? " error" : ""}`}>
+          {statusMsg}
+        </span>
       </section>
     </main>
   );

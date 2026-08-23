@@ -36,7 +36,13 @@ type Tab = "dashboard" | "stations" | "routes" | "schedules";
 async function apiFetch<T>(
   path: string,
   options?: RequestInit,
-): Promise<{ ok: boolean; data: T | null; error: { code: string; message: string } | null }> {
+): Promise<
+  {
+    ok: boolean;
+    data: T | null;
+    error: { code: string; message: string } | null;
+  }
+> {
   const token = localStorage.getItem("admin_token");
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -46,7 +52,11 @@ async function apiFetch<T>(
     const res = await fetch("/api" + path, { ...options, headers });
     return await res.json();
   } catch {
-    return { ok: false, data: null, error: { code: "NETWORK_ERROR", message: "网络请求失败" } };
+    return {
+      ok: false,
+      data: null,
+      error: { code: "NETWORK_ERROR", message: "网络请求失败" },
+    };
   }
 }
 
@@ -83,7 +93,11 @@ function MastheadClock() {
   return (
     <div class="a-mm-clock">
       <span class="a-mm-time">
-        {h}<span class="blink">:</span>{m}<span class="blink">:</span>{s}
+        {h}
+        <span class="blink">:</span>
+        {m}
+        <span class="blink">:</span>
+        {s}
       </span>
       <span class="a-mm-date">{dateStr}</span>
     </div>
@@ -115,6 +129,14 @@ export default function AdminPanel() {
   const [batchJson, setBatchJson] = useState("");
   const [batchResult, setBatchResult] = useState("");
   const [batchIsErr, setBatchIsErr] = useState(false);
+
+  /* ---- 修改密码 ---- */
+  const [showPassword, setShowPassword] = useState(false);
+  const [oldPwd, setOldPwd] = useState("");
+  const [newPwd, setNewPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [pwdError, setPwdError] = useState("");
+  const [pwdSuccess, setPwdSuccess] = useState("");
 
   /* ---- 挂载：检查登录 ---- */
   useEffect(() => {
@@ -168,7 +190,9 @@ export default function AdminPanel() {
   }
 
   async function loadStats() {
-    const res = await apiFetch<{ stations: number; routes: number; schedules: number }>("/stats");
+    const res = await apiFetch<
+      { stations: number; routes: number; schedules: number }
+    >("/stats");
     if (res.ok && res.data) setStats(res.data);
   }
 
@@ -178,7 +202,10 @@ export default function AdminPanel() {
     setLoginError("");
     const res = await apiFetch<{ token: string; user: User }>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ username: loginUsername, password: loginPassword }),
+      body: JSON.stringify({
+        username: loginUsername,
+        password: loginPassword,
+      }),
     });
     if (res.ok && res.data) {
       localStorage.setItem("admin_token", res.data.token);
@@ -196,6 +223,40 @@ export default function AdminPanel() {
     setActiveTab("dashboard");
     setFilterStationId("");
     setFilterRouteId("");
+  }
+
+  /* ---- 修改密码 ---- */
+  function openPasswordModal() {
+    setOldPwd("");
+    setNewPwd("");
+    setConfirmPwd("");
+    setPwdError("");
+    setPwdSuccess("");
+    setShowPassword(true);
+  }
+
+  function closePasswordModal() {
+    if (pwdSuccess) return;
+    setShowPassword(false);
+  }
+
+  async function handleChangePassword(e: Event) {
+    e.preventDefault();
+    setPwdError("");
+    setPwdSuccess("");
+    if (!oldPwd) return setPwdError("请输入原密码");
+    if (newPwd.length < 6) return setPwdError("新密码至少 6 位");
+    if (newPwd !== confirmPwd) return setPwdError("两次输入的新密码不一致");
+    const res = await apiFetch("/auth/password", {
+      method: "PUT",
+      body: JSON.stringify({ currentPassword: oldPwd, newPassword: newPwd }),
+    });
+    if (res.ok) {
+      setPwdSuccess("密码修改成功");
+      setTimeout(() => setShowPassword(false), 1200);
+    } else {
+      setPwdError(res.error?.message || "修改失败");
+    }
   }
 
   /* ---- 站点 CRUD ---- */
@@ -240,10 +301,13 @@ export default function AdminPanel() {
     if (!filterStationId) return;
     const form = e.target as HTMLFormElement;
     const data = new FormData(form);
-    const res = await apiFetch<Route>("/stations/" + filterStationId + "/routes", {
-      method: "POST",
-      body: JSON.stringify({ name: data.get("name") }),
-    });
+    const res = await apiFetch<Route>(
+      "/stations/" + filterStationId + "/routes",
+      {
+        method: "POST",
+        body: JSON.stringify({ name: data.get("name") }),
+      },
+    );
     if (res.ok) {
       form.reset();
       loadRoutes();
@@ -283,10 +347,16 @@ export default function AdminPanel() {
     if (!filterRouteId) return;
     const form = e.target as HTMLFormElement;
     const data = new FormData(form);
-    const res = await apiFetch<Schedule>("/routes/" + filterRouteId + "/schedules", {
-      method: "POST",
-      body: JSON.stringify({ time: data.get("time"), note: data.get("note") }),
-    });
+    const res = await apiFetch<Schedule>(
+      "/routes/" + filterRouteId + "/schedules",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          time: data.get("time"),
+          note: data.get("note"),
+        }),
+      },
+    );
     if (res.ok) {
       form.reset();
       loadSchedules(filterRouteId);
@@ -299,7 +369,8 @@ export default function AdminPanel() {
     const form = e.target as HTMLFormElement;
     const data = new FormData(form);
     const res = await apiFetch<Schedule>(
-      "/schedules/" + filterRouteId + "/" + encodeURIComponent(editingSchedule.time),
+      "/schedules/" + filterRouteId + "/" +
+        encodeURIComponent(editingSchedule.time),
       {
         method: "PUT",
         body: JSON.stringify({
@@ -317,9 +388,12 @@ export default function AdminPanel() {
 
   async function handleDeleteSchedule(routeId: string, time: string) {
     if (!confirm("确定删除这个班次？")) return;
-    const res = await apiFetch("/schedules/" + routeId + "/" + encodeURIComponent(time), {
-      method: "DELETE",
-    });
+    const res = await apiFetch(
+      "/schedules/" + routeId + "/" + encodeURIComponent(time),
+      {
+        method: "DELETE",
+      },
+    );
     if (res.ok) loadSchedules(routeId);
   }
 
@@ -379,7 +453,8 @@ export default function AdminPanel() {
                 id="a-login-user"
                 type="text"
                 value={loginUsername}
-                onInput={(e) => setLoginUsername((e.target as HTMLInputElement).value)}
+                onInput={(e) =>
+                  setLoginUsername((e.target as HTMLInputElement).value)}
                 required
                 autocomplete="username"
               />
@@ -390,7 +465,8 @@ export default function AdminPanel() {
                 id="a-login-pass"
                 type="password"
                 value={loginPassword}
-                onInput={(e) => setLoginPassword((e.target as HTMLInputElement).value)}
+                onInput={(e) =>
+                  setLoginPassword((e.target as HTMLInputElement).value)}
                 required
                 autocomplete="current-password"
               />
@@ -404,7 +480,9 @@ export default function AdminPanel() {
   }
 
   /* ---- 站务桌面 ---- */
-  const filteredRoutes = routes.filter((r) => !filterStationId || r.stationId === filterStationId);
+  const filteredRoutes = routes.filter((r) =>
+    !filterStationId || r.stationId === filterStationId
+  );
   const selectedStation = stations.find((s) => s.id === filterStationId);
   const selectedRoute = routes.find((r) => r.id === filterRouteId);
 
@@ -433,7 +511,9 @@ export default function AdminPanel() {
         <aside class="a-index">
           <div class="a-admin">
             <div class="who">{user.username}</div>
-            <span class="tag">{user.role === "admin" ? "管理员" : "编辑员"}</span>
+            <span class="tag">
+              {user.role === "admin" ? "管理员" : "编辑员"}
+            </span>
           </div>
           <ul class="a-nav">
             {navs.map((n) => (
@@ -447,7 +527,16 @@ export default function AdminPanel() {
               </li>
             ))}
           </ul>
-          <button class="a-navitem a-logout" onClick={handleLogout}>退出登录</button>
+          <button class="a-navitem a-logout" onClick={handleLogout}>
+            退出登录
+          </button>
+          <button
+            type="button"
+            class="a-navitem a-changepwd"
+            onClick={openPasswordModal}
+          >
+            更改密码
+          </button>
         </aside>
 
         {/* 台账主区 */}
@@ -472,8 +561,8 @@ export default function AdminPanel() {
                 </div>
               </div>
               <div class="a-hint">
-                维护顺序：<b>站点</b> → 在站点下<b>添加线路</b> → 在线路下<b>排班次</b>。
-                左侧切换进入对应台账。
+                维护顺序：<b>站点</b> → 在站点下<b>添加线路</b>{" "}
+                → 在线路下<b>排班次</b>。 左侧切换进入对应台账。
               </div>
             </div>
           )}
@@ -485,9 +574,21 @@ export default function AdminPanel() {
               <h2 class="a-title">车站管理</h2>
 
               <form class="a-form" onSubmit={handleCreateStation}>
-                <input class="a-input" name="name" placeholder="站点名称" required />
-                <input class="a-input" name="city" placeholder="所在城市" required />
-                <button type="submit" class="a-btn a-btn-primary">添加站点</button>
+                <input
+                  class="a-input"
+                  name="name"
+                  placeholder="站点名称"
+                  required
+                />
+                <input
+                  class="a-input"
+                  name="city"
+                  placeholder="所在城市"
+                  required
+                />
+                <button type="submit" class="a-btn a-btn-primary">
+                  添加站点
+                </button>
               </form>
 
               <div class="a-table-wrap">
@@ -502,34 +603,86 @@ export default function AdminPanel() {
                   </thead>
                   <tbody>
                     {stations.length === 0 && (
-                      <tr><td colspan="4" class="a-empty">还没有站点，先在上方添加一个。</td></tr>
+                      <tr>
+                        <td colspan="4" class="a-empty">
+                          还没有站点，先在上方添加一个。
+                        </td>
+                      </tr>
                     )}
                     {stations.map((s) => (
                       <tr key={s.id}>
-                        {editingStation?.id === s.id ? (
-                          <td colspan="4" class="a-edit-row">
-                            <form class="a-form" onSubmit={handleUpdateStation}>
-                              <input class="a-input" name="name" value={editingStation.name}
-                                onInput={(e) => setEditingStation({ ...editingStation, name: (e.target as HTMLInputElement).value })} required />
-                              <input class="a-input" name="city" value={editingStation.city}
-                                onInput={(e) => setEditingStation({ ...editingStation, city: (e.target as HTMLInputElement).value })} required />
-                              <button type="submit" class="a-btn a-btn-primary">保存</button>
-                              <button type="button" class="a-btn a-btn-ghost" onClick={() => setEditingStation(null)}>取消</button>
-                            </form>
-                          </td>
-                        ) : (
-                          <>
-                            <td><b>{s.name}</b></td>
-                            <td>{s.city}</td>
-                            <td class="a-muted">{formatTime(s.createdAt)}</td>
-                            <td class="a-th-ops">
-                              <span class="a-ops">
-                                <button class="a-btn a-btn-sm" onClick={() => setEditingStation(s)}>编辑</button>
-                                <button class="a-btn a-btn-sm danger" onClick={() => handleDeleteStation(s.id)}>删除</button>
-                              </span>
+                        {editingStation?.id === s.id
+                          ? (
+                            <td colspan="4" class="a-edit-row">
+                              <form
+                                class="a-form"
+                                onSubmit={handleUpdateStation}
+                              >
+                                <input
+                                  class="a-input"
+                                  name="name"
+                                  value={editingStation.name}
+                                  onInput={(e) =>
+                                    setEditingStation({
+                                      ...editingStation,
+                                      name:
+                                        (e.target as HTMLInputElement).value,
+                                    })}
+                                  required
+                                />
+                                <input
+                                  class="a-input"
+                                  name="city"
+                                  value={editingStation.city}
+                                  onInput={(e) =>
+                                    setEditingStation({
+                                      ...editingStation,
+                                      city:
+                                        (e.target as HTMLInputElement).value,
+                                    })}
+                                  required
+                                />
+                                <button
+                                  type="submit"
+                                  class="a-btn a-btn-primary"
+                                >
+                                  保存
+                                </button>
+                                <button
+                                  type="button"
+                                  class="a-btn a-btn-ghost"
+                                  onClick={() => setEditingStation(null)}
+                                >
+                                  取消
+                                </button>
+                              </form>
                             </td>
-                          </>
-                        )}
+                          )
+                          : (
+                            <>
+                              <td>
+                                <b>{s.name}</b>
+                              </td>
+                              <td>{s.city}</td>
+                              <td class="a-muted">{formatTime(s.createdAt)}</td>
+                              <td class="a-th-ops">
+                                <span class="a-ops">
+                                  <button
+                                    class="a-btn a-btn-sm"
+                                    onClick={() => setEditingStation(s)}
+                                  >
+                                    编辑
+                                  </button>
+                                  <button
+                                    class="a-btn a-btn-sm danger"
+                                    onClick={() => handleDeleteStation(s.id)}
+                                  >
+                                    删除
+                                  </button>
+                                </span>
+                              </td>
+                            </>
+                          )}
                       </tr>
                     ))}
                   </tbody>
@@ -545,21 +698,32 @@ export default function AdminPanel() {
               <h2 class="a-title">线路管理</h2>
 
               <div class="a-filters">
-                <select class="a-select" value={filterStationId}
+                <select
+                  class="a-select"
+                  value={filterStationId}
                   onChange={(e) => {
                     setFilterStationId((e.target as HTMLSelectElement).value);
                     setFilterRouteId("");
                   }}
                 >
                   <option value="">全部站点</option>
-                  {stations.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  {stations.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
                 </select>
               </div>
 
               {filterStationId && (
                 <form class="a-form" onSubmit={handleCreateRoute}>
-                  <input class="a-input" name="name" placeholder="线路名称，如 万载-宜春" required />
-                  <button type="submit" class="a-btn a-btn-primary">添加线路</button>
+                  <input
+                    class="a-input"
+                    name="name"
+                    placeholder="线路名称，如 万载-宜春"
+                    required
+                  />
+                  <button type="submit" class="a-btn a-btn-primary">
+                    添加线路
+                  </button>
                 </form>
               )}
 
@@ -577,41 +741,94 @@ export default function AdminPanel() {
                   </thead>
                   <tbody>
                     {filteredRoutes.length === 0 && (
-                      <tr><td colspan="6" class="a-empty">
-                        {filterStationId ? "这个站点还没有线路，在上方添加一条。" : "请先选择站点。"}
-                      </td></tr>
+                      <tr>
+                        <td colspan="6" class="a-empty">
+                          {filterStationId
+                            ? "这个站点还没有线路，在上方添加一条。"
+                            : "请先选择站点。"}
+                        </td>
+                      </tr>
                     )}
                     {filteredRoutes.map((r) => (
                       <tr key={r.id}>
-                        {editingRoute?.id === r.id ? (
-                          <td colspan="6" class="a-edit-row">
-                            <form class="a-form" onSubmit={handleUpdateRoute}>
-                              <input class="a-input" name="name" value={editingRoute.name}
-                                onInput={(e) => setEditingRoute({ ...editingRoute, name: (e.target as HTMLInputElement).value })} required />
-                              <label class="a-check">
-                                <input type="checkbox" name="enabled" checked={editingRoute.enabled}
-                                  onChange={(e) => setEditingRoute({ ...editingRoute, enabled: (e.target as HTMLInputElement).checked })} />
-                                启用
-                              </label>
-                              <button type="submit" class="a-btn a-btn-primary">保存</button>
-                              <button type="button" class="a-btn a-btn-ghost" onClick={() => setEditingRoute(null)}>取消</button>
-                            </form>
-                          </td>
-                        ) : (
-                          <>
-                            <td class="a-route">{displayRoute(r.name)}</td>
-                            <td>{r.from}</td>
-                            <td>{r.to}</td>
-                            <td><span class={"a-badge " + (r.enabled ? "on" : "off")}>{r.enabled ? "启用" : "停用"}</span></td>
-                            <td class="a-muted">{formatTime(r.createdAt)}</td>
-                            <td class="a-th-ops">
-                              <span class="a-ops">
-                                <button class="a-btn a-btn-sm" onClick={() => setEditingRoute(r)}>编辑</button>
-                                <button class="a-btn a-btn-sm danger" onClick={() => handleDeleteRoute(r.id)}>删除</button>
-                              </span>
+                        {editingRoute?.id === r.id
+                          ? (
+                            <td colspan="6" class="a-edit-row">
+                              <form class="a-form" onSubmit={handleUpdateRoute}>
+                                <input
+                                  class="a-input"
+                                  name="name"
+                                  value={editingRoute.name}
+                                  onInput={(e) =>
+                                    setEditingRoute({
+                                      ...editingRoute,
+                                      name:
+                                        (e.target as HTMLInputElement).value,
+                                    })}
+                                  required
+                                />
+                                <label class="a-check">
+                                  <input
+                                    type="checkbox"
+                                    name="enabled"
+                                    checked={editingRoute.enabled}
+                                    onChange={(e) =>
+                                      setEditingRoute({
+                                        ...editingRoute,
+                                        enabled: (e.target as HTMLInputElement)
+                                          .checked,
+                                      })}
+                                  />
+                                  启用
+                                </label>
+                                <button
+                                  type="submit"
+                                  class="a-btn a-btn-primary"
+                                >
+                                  保存
+                                </button>
+                                <button
+                                  type="button"
+                                  class="a-btn a-btn-ghost"
+                                  onClick={() => setEditingRoute(null)}
+                                >
+                                  取消
+                                </button>
+                              </form>
                             </td>
-                          </>
-                        )}
+                          )
+                          : (
+                            <>
+                              <td class="a-route">{displayRoute(r.name)}</td>
+                              <td>{r.from}</td>
+                              <td>{r.to}</td>
+                              <td>
+                                <span
+                                  class={"a-badge " +
+                                    (r.enabled ? "on" : "off")}
+                                >
+                                  {r.enabled ? "启用" : "停用"}
+                                </span>
+                              </td>
+                              <td class="a-muted">{formatTime(r.createdAt)}</td>
+                              <td class="a-th-ops">
+                                <span class="a-ops">
+                                  <button
+                                    class="a-btn a-btn-sm"
+                                    onClick={() => setEditingRoute(r)}
+                                  >
+                                    编辑
+                                  </button>
+                                  <button
+                                    class="a-btn a-btn-sm danger"
+                                    onClick={() => handleDeleteRoute(r.id)}
+                                  >
+                                    删除
+                                  </button>
+                                </span>
+                              </td>
+                            </>
+                          )}
                       </tr>
                     ))}
                   </tbody>
@@ -627,30 +844,53 @@ export default function AdminPanel() {
               <h2 class="a-title">班次管理</h2>
 
               <div class="a-filters">
-                <select class="a-select" value={filterStationId}
+                <select
+                  class="a-select"
+                  value={filterStationId}
                   onChange={(e) => {
                     setFilterStationId((e.target as HTMLSelectElement).value);
                     setFilterRouteId("");
                   }}
                 >
                   <option value="">全部站点</option>
-                  {stations.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  {stations.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
                 </select>
-                <select class="a-select" value={filterRouteId}
-                  onChange={(e) => setFilterRouteId((e.target as HTMLSelectElement).value)}
+                <select
+                  class="a-select"
+                  value={filterRouteId}
+                  onChange={(e) =>
+                    setFilterRouteId((e.target as HTMLSelectElement).value)}
                   disabled={!filterStationId}
                 >
                   <option value="">选择线路</option>
-                  {filteredRoutes.map((r) => <option key={r.id} value={r.id}>{displayRoute(r.name)}</option>)}
+                  {filteredRoutes.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {displayRoute(r.name)}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               {filterRouteId && (
                 <>
                   <form class="a-form" onSubmit={handleCreateSchedule}>
-                    <input class="a-input mono-time" name="time" placeholder="发车时间 HH:MM" pattern="[0-9]{2}:[0-9]{2}" required />
-                    <input class="a-input" name="note" placeholder="备注（可选）" />
-                    <button type="submit" class="a-btn a-btn-primary">添加班次</button>
+                    <input
+                      class="a-input mono-time"
+                      name="time"
+                      placeholder="发车时间 HH:MM"
+                      pattern="[0-9]{2}:[0-9]{2}"
+                      required
+                    />
+                    <input
+                      class="a-input"
+                      name="note"
+                      placeholder="备注（可选）"
+                    />
+                    <button type="submit" class="a-btn a-btn-primary">
+                      添加班次
+                    </button>
                   </form>
 
                   <details class="a-batch">
@@ -659,14 +899,21 @@ export default function AdminPanel() {
                       <textarea
                         class="a-textarea"
                         value={batchJson}
-                        onInput={(e) => setBatchJson((e.target as HTMLTextAreaElement).value)}
+                        onInput={(e) =>
+                          setBatchJson((e.target as HTMLTextAreaElement).value)}
                         placeholder='[ { "time": "08:00", "note": "" }, { "time": "09:30", "note": "途经宜春" } ]'
                         rows={6}
                       />
-                      <button type="submit" class="a-btn a-btn-primary">导入</button>
+                      <button type="submit" class="a-btn a-btn-primary">
+                        导入
+                      </button>
                     </form>
                     {batchResult && (
-                      <div class={"a-batch-result" + (batchIsErr ? " err" : "")}>{batchResult}</div>
+                      <div
+                        class={"a-batch-result" + (batchIsErr ? " err" : "")}
+                      >
+                        {batchResult}
+                      </div>
                     )}
                   </details>
 
@@ -682,40 +929,111 @@ export default function AdminPanel() {
                       </thead>
                       <tbody>
                         {schedules.length === 0 && (
-                          <tr><td colspan="4" class="a-empty">这条线路还没有班次，在上方添加或批量导入。</td></tr>
+                          <tr>
+                            <td colspan="4" class="a-empty">
+                              这条线路还没有班次，在上方添加或批量导入。
+                            </td>
+                          </tr>
                         )}
                         {schedules.map((s) => (
                           <tr key={s.time}>
-                            {editingSchedule?.routeId === s.routeId && editingSchedule?.time === s.time ? (
-                              <td colspan="4" class="a-edit-row">
-                                <form class="a-form" onSubmit={handleUpdateSchedule}>
-                                  <input class="a-input mono-time" name="time" value={editingSchedule.time}
-                                    onInput={(e) => setEditingSchedule({ ...editingSchedule, time: (e.target as HTMLInputElement).value })}
-                                    pattern="[0-9]{2}:[0-9]{2}" required />
-                                  <input class="a-input" name="note" value={editingSchedule.note}
-                                    onInput={(e) => setEditingSchedule({ ...editingSchedule, note: (e.target as HTMLInputElement).value })} />
-                                  <label class="a-check">
-                                    <input type="checkbox" name="enabled" checked={editingSchedule.enabled}
-                                      onChange={(e) => setEditingSchedule({ ...editingSchedule, enabled: (e.target as HTMLInputElement).checked })} />
-                                    启用
-                                  </label>
-                                  <button type="submit" class="a-btn a-btn-primary">保存</button>
-                                  <button type="button" class="a-btn a-btn-ghost" onClick={() => setEditingSchedule(null)}>取消</button>
-                                </form>
-                              </td>
-                            ) : (
-                              <>
-                                <td class="a-time">{s.time}</td>
-                                <td class="a-muted">{s.note || "—"}</td>
-                                <td><span class={"a-badge " + (s.enabled ? "on" : "off")}>{s.enabled ? "启用" : "停用"}</span></td>
-                                <td class="a-th-ops">
-                                  <span class="a-ops">
-                                    <button class="a-btn a-btn-sm" onClick={() => setEditingSchedule(s)}>编辑</button>
-                                    <button class="a-btn a-btn-sm danger" onClick={() => handleDeleteSchedule(s.routeId, s.time)}>删除</button>
-                                  </span>
+                            {editingSchedule?.routeId === s.routeId &&
+                                editingSchedule?.time === s.time
+                              ? (
+                                <td colspan="4" class="a-edit-row">
+                                  <form
+                                    class="a-form"
+                                    onSubmit={handleUpdateSchedule}
+                                  >
+                                    <input
+                                      class="a-input mono-time"
+                                      name="time"
+                                      value={editingSchedule.time}
+                                      onInput={(e) =>
+                                        setEditingSchedule({
+                                          ...editingSchedule,
+                                          time: (e.target as HTMLInputElement)
+                                            .value,
+                                        })}
+                                      pattern="[0-9]{2}:[0-9]{2}"
+                                      required
+                                    />
+                                    <input
+                                      class="a-input"
+                                      name="note"
+                                      value={editingSchedule.note}
+                                      onInput={(e) =>
+                                        setEditingSchedule({
+                                          ...editingSchedule,
+                                          note: (e.target as HTMLInputElement)
+                                            .value,
+                                        })}
+                                    />
+                                    <label class="a-check">
+                                      <input
+                                        type="checkbox"
+                                        name="enabled"
+                                        checked={editingSchedule.enabled}
+                                        onChange={(e) =>
+                                          setEditingSchedule({
+                                            ...editingSchedule,
+                                            enabled:
+                                              (e.target as HTMLInputElement)
+                                                .checked,
+                                          })}
+                                      />
+                                      启用
+                                    </label>
+                                    <button
+                                      type="submit"
+                                      class="a-btn a-btn-primary"
+                                    >
+                                      保存
+                                    </button>
+                                    <button
+                                      type="button"
+                                      class="a-btn a-btn-ghost"
+                                      onClick={() => setEditingSchedule(null)}
+                                    >
+                                      取消
+                                    </button>
+                                  </form>
                                 </td>
-                              </>
-                            )}
+                              )
+                              : (
+                                <>
+                                  <td class="a-time">{s.time}</td>
+                                  <td class="a-muted">{s.note || "—"}</td>
+                                  <td>
+                                    <span
+                                      class={"a-badge " +
+                                        (s.enabled ? "on" : "off")}
+                                    >
+                                      {s.enabled ? "启用" : "停用"}
+                                    </span>
+                                  </td>
+                                  <td class="a-th-ops">
+                                    <span class="a-ops">
+                                      <button
+                                        class="a-btn a-btn-sm"
+                                        onClick={() => setEditingSchedule(s)}
+                                      >
+                                        编辑
+                                      </button>
+                                      <button
+                                        class="a-btn a-btn-sm danger"
+                                        onClick={() =>
+                                          handleDeleteSchedule(
+                                            s.routeId,
+                                            s.time,
+                                          )}
+                                      >
+                                        删除
+                                      </button>
+                                    </span>
+                                  </td>
+                                </>
+                              )}
                           </tr>
                         ))}
                       </tbody>
@@ -725,12 +1043,87 @@ export default function AdminPanel() {
               )}
 
               {!filterRouteId && (
-                <div class="a-hint">先在上方选择<b>站点</b>和<b>线路</b>，再维护这条线路的班次。</div>
+                <div class="a-hint">
+                  先在上方选择<b>站点</b>和<b>线路</b>，再维护这条线路的班次。
+                </div>
               )}
             </div>
           )}
         </main>
       </div>
+
+      {/* 修改密码弹窗 */}
+      {showPassword && (
+        <div
+          class="a-modal-backdrop"
+          onClick={() => {
+            if (!pwdSuccess) setShowPassword(false);
+          }}
+        >
+          <div class="a-modal" onClick={(e) => e.stopPropagation()}>
+            <div class="a-modal-head">
+              <span class="a-mm-seal">密</span>
+              <div>
+                <div class="t">更改密码</div>
+                <div class="s">{user.username}</div>
+              </div>
+            </div>
+            <form onSubmit={handleChangePassword}>
+              <div class="a-field">
+                <label for="a-pwd-old">原密码</label>
+                <input
+                  id="a-pwd-old"
+                  type="password"
+                  value={oldPwd}
+                  onInput={(e) =>
+                    setOldPwd((e.target as HTMLInputElement).value)}
+                  required
+                  autocomplete="current-password"
+                />
+              </div>
+              <div class="a-field">
+                <label for="a-pwd-new">新密码</label>
+                <input
+                  id="a-pwd-new"
+                  type="password"
+                  value={newPwd}
+                  onInput={(e) =>
+                    setNewPwd((e.target as HTMLInputElement).value)}
+                  minlength={6}
+                  required
+                  autocomplete="new-password"
+                />
+              </div>
+              <div class="a-field">
+                <label for="a-pwd-confirm">确认新密码</label>
+                <input
+                  id="a-pwd-confirm"
+                  type="password"
+                  value={confirmPwd}
+                  onInput={(e) =>
+                    setConfirmPwd((e.target as HTMLInputElement).value)}
+                  minlength={6}
+                  required
+                  autocomplete="new-password"
+                />
+              </div>
+              {pwdError && <div class="a-modal-msg err">{pwdError}</div>}
+              {pwdSuccess && <div class="a-modal-msg ok">{pwdSuccess}</div>}
+              <div class="a-modal-actions">
+                <button type="submit" class="a-btn a-btn-primary">保存</button>
+                <button
+                  type="button"
+                  class="a-btn a-btn-ghost"
+                  onClick={closePasswordModal}
+                  disabled={!!pwdSuccess}
+                >
+                  取消
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }

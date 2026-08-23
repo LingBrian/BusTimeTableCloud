@@ -101,7 +101,7 @@ export default define.page(async (ctx) => {
         <main class="s-card">
           <h1>{from}到{to}班车时刻表</h1>
           <p class="s-meta">
-            {from}汽车站发车　每日班次：{schedules.length} 班
+            {from}汽车站发车 · 每日班次：{schedules.length} 班
           </p>
 
           <section aria-labelledby="sched-list">
@@ -143,6 +143,7 @@ export default define.page(async (ctx) => {
                     <a class="s-route" href={`/r/${r.id}`}>
                       {r.name.replace("-", " → ")}
                     </a>
+                    <span class="s-route-note">查看班次</span>
                   </li>
                 ))}
               </ul>

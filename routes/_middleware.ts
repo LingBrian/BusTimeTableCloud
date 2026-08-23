@@ -10,7 +10,11 @@ export const handler = define.middleware(async (ctx) => {
     const method = ctx.req.method;
 
     // B5：深链参数页 301 → 静态可收录路由（route 优先，其次 station）
-    if (method === "GET" && !path.startsWith("/api/") && path !== "/admin") {
+    // 主页 "/" 除外：分享链接带参数应停留在主页电子屏，由看板自行恢复站点/线路/方向
+    if (
+      method === "GET" && path !== "/" && !path.startsWith("/api/") &&
+      path !== "/admin"
+    ) {
       const routeParam = url.searchParams.get("route");
       const stationParam = url.searchParams.get("station");
       if (routeParam) {

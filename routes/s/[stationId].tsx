@@ -75,7 +75,7 @@ export default define.page(async (ctx) => {
         <main class="s-card">
           <h1>{station.value.name}班车时刻表</h1>
           <p class="s-meta">
-            所在地：{station.value.city}运营线路：{routes.length} 条
+            所在地：{station.value.city} · 运营线路：{routes.length} 条
           </p>
 
           <section aria-labelledby="route-list">
@@ -89,7 +89,7 @@ export default define.page(async (ctx) => {
                       <a class="s-route" href={`/r/${r.id}`}>
                         {displayRoute(r.name)}
                       </a>
-                      <span class="s-route-note">点击查看全部发车班次</span>
+                      <span class="s-route-note">查看班次</span>
                     </li>
                   ))}
                 </ul>
