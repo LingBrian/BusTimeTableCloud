@@ -9,4 +9,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://bustimetable-wanzai.example.com/sitemap.xml
+Sitemap: https://bst.brl0.top/sitemap.xml

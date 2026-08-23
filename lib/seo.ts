@@ -3,9 +3,15 @@
 // 或在反向代理（nginx/Deno Deploy 路由）层统一 https 跳转与 www 重定向，
 // 并保持 static/robots.txt、static/sitemap.xml 中的 Sitemap 域名与之一致。
 
-export const SEO_ORIGIN = (
-  Deno.env.get("SEO_ORIGIN") ??
-    "https://bustimetable-wanzai.example.com"
+function normalizeOrigin(input: string): string {
+  const trimmed = input.trim();
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+}
+
+export const SEO_ORIGIN = normalizeOrigin(
+  Deno.env.get("SEO_ORIGIN") ?? "bustimetable-wanzai.example.com",
 ).replace(/\/+$/, "");
 
 export const SEO_SITE_NAME = "万载城北汽车站班车时刻表";
