@@ -15,7 +15,7 @@ export default define.page(async () => {
   return (
     <>
       <Head>
-        <title>万载城北汽车站班车时刻表 - 万载汽车站全天发车班次</title>
+        <title>班车时刻表 - 在线查询各站发车班次</title>
       </Head>
       <StationBoard>
         {stations.length > 0 && (

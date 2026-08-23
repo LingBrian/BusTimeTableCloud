@@ -156,7 +156,7 @@ export default function AdminPanel() {
 
   /* ---- 挂载：检查登录 ---- */
   useEffect(() => {
-    document.title = "万载城北汽车站 · 站务管理";
+    document.title = "班车时刻表 · 站务管理";
     const token = localStorage.getItem("admin_token");
     if (!token) {
       setAuthLoading(false);
@@ -573,7 +573,7 @@ export default function AdminPanel() {
             <span class="a-mm-seal">站</span>
             <div>
               <div class="t">站务登录</div>
-              <div class="s">万载城北汽车站 · 管理后台</div>
+              <div class="s">班车时刻表 · 管理后台</div>
             </div>
           </div>
           <form onSubmit={handleLogin}>
@@ -630,7 +630,7 @@ export default function AdminPanel() {
         <div class="a-mm-brand">
           <span class="a-mm-seal">站</span>
           <div>
-            <div class="a-mm-title">万载城北汽车站 · 站务管理</div>
+            <div class="a-mm-title">班车时刻表 · 站务管理</div>
             <div class="a-mm-sub">管理后台</div>
           </div>
         </div>
@@ -849,7 +849,7 @@ export default function AdminPanel() {
                   <input
                     class="a-input"
                     name="name"
-                    placeholder="线路名称，如 万载-宜春"
+                    placeholder="线路名称，如 县城-乡镇"
                     required
                   />
                   <button type="submit" class="a-btn a-btn-primary">

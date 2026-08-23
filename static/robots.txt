@@ -1,4 +1,4 @@
-# robots.txt · 万载城北汽车站班车时刻表
+# robots.txt · 班车时刻表
 # 允许搜索引擎收录对外展示页面，管理后台与 API 不收录。
 # A7 域名规范化：部署时把下面的 Sitemap 域名替换为正式域名（https + www 归一），
 # 并与 lib/seo.ts 的 SEO_ORIGIN 保持一致。

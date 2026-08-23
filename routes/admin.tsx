@@ -6,7 +6,7 @@ export default define.page(function Admin() {
   return (
     <>
       <Head>
-        <title>万载城北汽车站 · 站务管理</title>
+        <title>班车时刻表 · 站务管理</title>
         <meta name="robots" content="noindex, nofollow" key="robots" />
       </Head>
       <link rel="stylesheet" href="/admin.css" />

@@ -14,13 +14,13 @@ export const SEO_ORIGIN = normalizeOrigin(
   Deno.env.get("SEO_ORIGIN") ?? "bustimetable-wanzai.example.com",
 ).replace(/\/+$/, "");
 
-export const SEO_SITE_NAME = "万载城北汽车站班车时刻表";
+export const SEO_SITE_NAME = "班车时刻表";
 
 export const SEO_DESCRIPTION =
-  "万载城北汽车站班车时刻表，站内各线路全天发车班次与方向实时查询。班次如有变动，以车站现场公告为准。";
+  "班车时刻表，各站各线路全天发车班次与方向实时查询。班次如有变动，以车站现场公告为准。";
 
 export const SEO_KEYWORDS =
-  "万载, 班车时刻表, 万载城北汽车站, 万载汽车站, 万载客车发车时刻, 万载长途班次";
+  "班车时刻表, 汽车站班车, 客车发车时刻, 长途班次, 班车查询";
 
 /* ===== JSON-LD 结构数据助手（阶段 C） ===== */
 

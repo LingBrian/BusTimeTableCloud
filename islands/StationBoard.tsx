@@ -617,7 +617,7 @@ export default function StationBoard(
       <h1 class="sr-only">
         {selectedStation
           ? `${stationName}班车时刻表`
-          : "万载城北汽车站班车时刻表"}
+          : "班车时刻表"}
       </h1>
 
       {/* 蓝牌：站钟 */}
