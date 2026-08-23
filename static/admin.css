@@ -508,6 +508,46 @@ body {
   color: #98a7bd;
 }
 
+/* 备份 */
+.a-backup-card {
+  background: #fff;
+  border: 1px solid #dfe7f2;
+  border-radius: 10px;
+  box-shadow: 0 10px 26px rgba(15, 42, 90, 0.06);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.a-backup-head {
+  margin-bottom: 12px;
+}
+.a-backup-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #13233c;
+  letter-spacing: 0.04em;
+}
+.a-backup-sub {
+  margin-top: 4px;
+  font-size: 0.74rem;
+  color: #5c6c84;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+}
+.a-backup-file {
+  margin: 8px 0 10px;
+}
+.a-backup-file input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+.a-backup-card .a-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* 批量导入 */
 .a-batch {
   margin: 12px 0;

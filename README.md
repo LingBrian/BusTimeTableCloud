@@ -37,6 +37,7 @@
 │   ├── kv.ts               # Deno KV 连接封装
 │   ├── schema.ts           # 类型定义（前后端共享）
 │   ├── auth.ts             # JWT 签发/校验、PBKDF2 哈希、统一响应体
+│   ├── backup.ts           # 备份导入/导出/清空共享逻辑
 │   ├── routeUtils.ts       # 线路端点解析 / 方向 key（与前/后端一致）
 │   └── seo.ts              # SEO 常量（SEO_ORIGIN 等，域名单点维护）
 ├── routes/
@@ -52,7 +53,7 @@
 │   └── api/                # API 路由（见下）
 ├── islands/
 │   ├── StationBoard.tsx    # 时刻表电子屏（站钟、下拉选择、下一班倒计时、30s 轮询、分享）
-│   └── AdminPanel.tsx      # 管理面板（站点/线路/班次 CRUD + 批量导入）
+│   └── AdminPanel.tsx      # 管理面板（站点/线路/班次 CRUD + 批量导入 + 备份）
 ├── components/             # 共享 UI（Button）
 ├── static/
 │   ├── favicon.ico
@@ -103,6 +104,9 @@ deno task start   # 运行构建产物（deno serve _fresh/server.js）
 | GET/POST | `/api/routes/:routeId/schedules` | 班次列表 / 新建 |
 | POST | `/api/routes/:routeId/schedules/batch` | 批量导入 |
 | PUT/DELETE | `/api/schedules/:routeId/:time` | 修改 / 删除班次 |
+| GET | `/api/backup/export` | 导出全部站点/线路/班次为 JSON |
+| POST | `/api/backup/import` | 导入 JSON 并覆盖数据（仅管理员） |
+| DELETE | `/api/backup/clear` | 一键清空站点/线路/班次（仅管理员） |
 | GET | `/api/auth/me` | 当前登录用户 |
 | GET | `/api/stats` | 站点/线路/班次计数 |
 

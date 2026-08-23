@@ -30,7 +30,17 @@ interface Schedule {
   enabled: boolean;
 }
 
-type Tab = "dashboard" | "stations" | "routes" | "schedules";
+type Tab = "dashboard" | "stations" | "routes" | "schedules" | "backup";
+
+interface BackupData {
+  version: number;
+  exportedAt: string;
+  stations: unknown[];
+  routes: unknown[];
+  schedules: unknown[];
+}
+
+type BackupCounts = { stations: number; routes: number; schedules: number };
 
 /* ===== Helpers ===== */
 async function apiFetch<T>(
@@ -129,6 +139,12 @@ export default function AdminPanel() {
   const [batchJson, setBatchJson] = useState("");
   const [batchResult, setBatchResult] = useState("");
   const [batchIsErr, setBatchIsErr] = useState(false);
+
+  /* ---- 备份 ---- */
+  const [backupJson, setBackupJson] = useState("");
+  const [backupResult, setBackupResult] = useState("");
+  const [backupIsErr, setBackupIsErr] = useState(false);
+  const [backupBusy, setBackupBusy] = useState(false);
 
   /* ---- 修改密码 ---- */
   const [showPassword, setShowPassword] = useState(false);
@@ -424,6 +440,120 @@ export default function AdminPanel() {
     }
   }
 
+  /* ---- 导出 ---- */
+  function backupFilename(): string {
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `backup-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(
+      d.getHours(),
+    )}${p(d.getMinutes())}.json`;
+  }
+
+  async function handleExport() {
+    if (backupBusy) return;
+    setBackupBusy(true);
+    setBackupResult("");
+    setBackupIsErr(false);
+    try {
+      const res = await apiFetch<BackupData>("/backup/export");
+      if (!res.ok || !res.data) {
+        setBackupResult(res.error?.message || "导出失败");
+        setBackupIsErr(true);
+        return;
+      }
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], {
+        type: "application/json;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = backupFilename();
+      a.click();
+      URL.revokeObjectURL(url);
+      setBackupResult(
+        `已导出：站点 ${res.data.stations.length}、线路 ${res.data.routes.length}、班次 ${res.data.schedules.length}`,
+      );
+    } catch {
+      setBackupResult("导出失败");
+      setBackupIsErr(true);
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+
+  /* ---- 导入 ---- */
+  function handlePickFile(e: Event) {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setBackupJson(String(reader.result ?? ""));
+    reader.readAsText(file);
+  }
+
+  async function handleImport(e: Event) {
+    e.preventDefault();
+    const text = backupJson.trim();
+    if (!text) return;
+    if (!confirm("导入将覆盖当前全部站点/线路/班次数据，确定继续？")) return;
+    setBackupBusy(true);
+    setBackupResult("");
+    setBackupIsErr(false);
+    try {
+      const parsed = JSON.parse(text);
+      const res = await apiFetch<BackupCounts>("/backup/import", {
+        method: "POST",
+        body: JSON.stringify(parsed),
+      });
+      if (res.ok && res.data) {
+        setBackupResult(
+          `已导入：站点 ${res.data.stations}、线路 ${res.data.routes}、班次 ${res.data.schedules}`,
+        );
+        setBackupJson("");
+        setFilterRouteId("");
+        loadStations();
+        loadRoutes();
+        loadStats();
+      } else {
+        setBackupResult(res.error?.message || "导入失败");
+        setBackupIsErr(true);
+      }
+    } catch {
+      setBackupResult("JSON 格式不正确");
+      setBackupIsErr(true);
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+
+  /* ---- 一键清空 ---- */
+  async function handleClear() {
+    if (backupBusy) return;
+    if (!confirm("确定一键清空全部站点/线路/班次数据？此操作不可恢复！")) return;
+    if (!confirm("再次确认：将删除全部线路与班次数据，仅保留账号。")) return;
+    setBackupBusy(true);
+    setBackupResult("");
+    setBackupIsErr(false);
+    try {
+      const res = await apiFetch<BackupCounts>("/backup/clear", {
+        method: "DELETE",
+      });
+      if (res.ok && res.data) {
+        setBackupResult(
+          `已清空：站点 ${res.data.stations}、线路 ${res.data.routes}、班次 ${res.data.schedules}`,
+        );
+        setFilterRouteId("");
+        loadStations();
+        loadRoutes();
+        loadStats();
+      } else {
+        setBackupResult(res.error?.message || "清空失败");
+        setBackupIsErr(true);
+      }
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+
   /* ===== 渲染 ===== */
   if (authLoading) {
     return (
@@ -491,6 +621,7 @@ export default function AdminPanel() {
     { key: "stations", label: "站点" },
     { key: "routes", label: "线路" },
     { key: "schedules", label: "班次" },
+    { key: "backup", label: "备份" },
   ];
 
   return (
@@ -1045,6 +1176,102 @@ export default function AdminPanel() {
               {!filterRouteId && (
                 <div class="a-hint">
                   先在上方选择<b>站点</b>和<b>线路</b>，再维护这条线路的班次。
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 备份台账 */}
+          {activeTab === "backup" && (
+            <div class="a-panel">
+              <div class="a-eyebrow">备 份 台 账</div>
+              <h2 class="a-title">数据备份 / 恢复</h2>
+
+              {user.role !== "admin" && (
+                <div class="a-hint">
+                  导入与清空数据仅<b>管理员</b>可操作；导出对所有人开放。
+                </div>
+              )}
+
+              <div class="a-backup-card">
+                <div class="a-backup-head">
+                  <div class="a-backup-title">导出全部数据</div>
+                  <div class="a-backup-sub">
+                    将全部站点、线路、班次导出为 JSON 文件，用于存档或迁移。
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="a-btn a-btn-primary"
+                  onClick={handleExport}
+                  disabled={backupBusy}
+                >
+                  {backupBusy ? "处理中…" : "一键导出 JSON"}
+                </button>
+              </div>
+
+              <div class="a-backup-card">
+                <div class="a-backup-head">
+                  <div class="a-backup-title">导入并覆盖</div>
+                  <div class="a-backup-sub">
+                    粘贴 JSON 或选择文件后导入，将覆盖当前全部站点/线路/班次。
+                    仅管理员可用。
+                  </div>
+                </div>
+                <details class="a-batch">
+                  <summary>展开导入面板</summary>
+                  <form onSubmit={handleImport}>
+                    <textarea
+                      class="a-textarea"
+                      value={backupJson}
+                      onInput={(e) =>
+                        setBackupJson((e.target as HTMLTextAreaElement).value)}
+                      placeholder='{ "stations": [...], "routes": [...], "schedules": [...] }'
+                      rows={8}
+                    />
+                    <div class="a-backup-file">
+                      <label class="a-btn a-btn-ghost">
+                        选择 JSON 文件
+                        <input
+                          type="file"
+                          accept=".json,application/json"
+                          onChange={handlePickFile}
+                        />
+                      </label>
+                    </div>
+                    <button
+                      type="submit"
+                      class="a-btn a-btn-primary"
+                      disabled={backupBusy || !backupJson.trim()}
+                    >
+                      {backupBusy ? "处理中…" : "导入并覆盖"}
+                    </button>
+                  </form>
+                </details>
+              </div>
+
+              <div class="a-backup-card">
+                <div class="a-backup-head">
+                  <div class="a-backup-title">一键清空数据</div>
+                  <div class="a-backup-sub">
+                    删除全部站点、线路与班次，仅保留登录账号。仅管理员可用。
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="a-btn a-btn-danger"
+                  onClick={handleClear}
+                  disabled={backupBusy}
+                >
+                  {backupBusy ? "处理中…" : "一键清空全部数据"}
+                </button>
+              </div>
+
+              {backupResult && (
+                <div
+                  class={"a-batch-result" + (backupIsErr ? " err" : "")}
+                >
+                  {backupResult}
                 </div>
               )}
             </div>
