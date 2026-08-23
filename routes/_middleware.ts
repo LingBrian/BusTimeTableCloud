@@ -17,7 +17,7 @@ export const handler = define.middleware(async (ctx) => {
         return new Response(null, {
           status: 301,
           headers: {
-            Location: `/r/${routeParam}`,
+            Location: `/r/${encodeURIComponent(routeParam)}`,
             "Cache-Control": "no-store",
           },
         });
@@ -26,7 +26,7 @@ export const handler = define.middleware(async (ctx) => {
         return new Response(null, {
           status: 301,
           headers: {
-            Location: `/s/${stationParam}`,
+            Location: `/s/${encodeURIComponent(stationParam)}`,
             "Cache-Control": "no-store",
           },
         });
