@@ -100,7 +100,9 @@ function Dropdown({
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current && !containerRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -110,7 +112,9 @@ function Dropdown({
 
   useEffect(() => {
     if (!open || !listRef.current) return;
-    const sel = listRef.current.querySelector('[aria-selected="true"]') as HTMLElement;
+    const sel = listRef.current.querySelector(
+      '[aria-selected="true"]',
+    ) as HTMLElement;
     if (sel) sel.focus();
     else {
       const first = listRef.current.querySelector("li") as HTMLElement;
@@ -121,7 +125,9 @@ function Dropdown({
   function handleListKeyDown(e: KeyboardEvent) {
     const items = listRef.current?.querySelectorAll("li");
     if (!items?.length) return;
-    const idx = Array.from(items).indexOf(document.activeElement as HTMLLIElement);
+    const idx = Array.from(items).indexOf(
+      document.activeElement as HTMLLIElement,
+    );
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -135,10 +141,15 @@ function Dropdown({
       e.preventDefault();
       const el = document.activeElement as HTMLElement;
       const key = el?.dataset?.key;
-      if (key) { onSelect(key); setOpen(false); }
+      if (key) {
+        onSelect(key);
+        setOpen(false);
+      }
     } else if (e.key === "Escape") {
       setOpen(false);
-      const btn = containerRef.current?.querySelector(".dd-head") as HTMLElement;
+      const btn = containerRef.current?.querySelector(
+        ".dd-head",
+      ) as HTMLElement;
       btn?.focus();
     }
   }
@@ -153,9 +164,14 @@ function Dropdown({
           disabled={disabled}
           aria-haspopup="listbox"
           aria-expanded={open}
-          onClick={() => { if (!disabled) setOpen(!open); }}
+          onClick={() => {
+            if (!disabled) setOpen(!open);
+          }}
           onKeyDown={(e) => {
-            if ((e.key === "Enter" || e.key === " " || e.key === "ArrowDown") && !disabled) {
+            if (
+              (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") &&
+              !disabled
+            ) {
               e.preventDefault();
               if (!open) setOpen(true);
             }
@@ -165,7 +181,12 @@ function Dropdown({
           <span class="dd-arrow" aria-hidden="true" />
         </button>
         {open && (
-          <ul class="dd-list" role="listbox" ref={listRef} onKeyDown={handleListKeyDown}>
+          <ul
+            class="dd-list"
+            role="listbox"
+            ref={listRef}
+            onKeyDown={handleListKeyDown}
+          >
             {options.map((opt) => (
               <li
                 key={opt.key}
@@ -173,7 +194,10 @@ function Dropdown({
                 role="option"
                 aria-selected={opt.key === selectedKey}
                 tabIndex={opt.key === selectedKey ? 0 : -1}
-                onClick={() => { onSelect(opt.key); setOpen(false); }}
+                onClick={() => {
+                  onSelect(opt.key);
+                  setOpen(false);
+                }}
               >
                 {opt.label}
               </li>
@@ -193,8 +217,18 @@ function ClockDisplay() {
   useEffect(() => {
     function tick() {
       const n = new Date();
-      setParts({ h: pad(n.getHours()), m: pad(n.getMinutes()), s: pad(n.getSeconds()) });
-      setDateStr(n.toLocaleDateString("zh-CN", { month: "long", day: "numeric", weekday: "short" }));
+      setParts({
+        h: pad(n.getHours()),
+        m: pad(n.getMinutes()),
+        s: pad(n.getSeconds()),
+      });
+      setDateStr(
+        n.toLocaleDateString("zh-CN", {
+          month: "long",
+          day: "numeric",
+          weekday: "short",
+        }),
+      );
     }
     tick();
     const id = setInterval(tick, 1000);
@@ -204,7 +238,11 @@ function ClockDisplay() {
   return (
     <>
       <div class="clock">
-        {parts.h}<span class="colon">:</span>{parts.m}<span class="colon">:</span>{parts.s}
+        {parts.h}
+        <span class="colon">:</span>
+        {parts.m}
+        <span class="colon">:</span>
+        {parts.s}
       </div>
       <div class="masthead-date">{dateStr}</div>
     </>
@@ -212,7 +250,9 @@ function ClockDisplay() {
 }
 
 /* ===== Hero Section ===== */
-function HeroSection({ data, selectedSide }: { data: Schedule[]; selectedSide: string }) {
+function HeroSection(
+  { data, selectedSide }: { data: Schedule[]; selectedSide: string },
+) {
   const [now, setNow] = useState(new Date());
   const cdNumRef = useRef<HTMLSpanElement>(null);
   const lastCdTextRef = useRef("");
@@ -233,7 +273,10 @@ function HeroSection({ data, selectedSide }: { data: Schedule[]; selectedSide: s
       if (dm < 0) continue;
       let diff = dm - currentMinutes;
       if (diff < 0) diff += 1440;
-      if (diff < minDiff) { minDiff = diff; next = item; }
+      if (diff < minDiff) {
+        minDiff = diff;
+        next = item;
+      }
     }
     return next;
   }, [data, currentMinutes, selectedSide]);
@@ -249,11 +292,19 @@ function HeroSection({ data, selectedSide }: { data: Schedule[]; selectedSide: s
 
   const cdText = useMemo(() => {
     if (countdownMinutes < 0) return { num: "--", unit: "" };
-    if (countdownMinutes < 1) return { num: "", unit: "即将发车", urgent: true };
-    if (countdownMinutes < 60) return { num: String(countdownMinutes), unit: "分钟", urgent: false };
+    if (countdownMinutes < 1) {
+      return { num: "", unit: "即将发车", urgent: true };
+    }
+    if (countdownMinutes < 60) {
+      return { num: String(countdownMinutes), unit: "分钟", urgent: false };
+    }
     const hours = Math.floor(countdownMinutes / 60);
     const mins = countdownMinutes % 60;
-    return { num: String(hours), unit: "小时" + (mins > 0 ? mins + "分" : ""), urgent: false };
+    return {
+      num: String(hours),
+      unit: "小时" + (mins > 0 ? mins + "分" : ""),
+      urgent: false,
+    };
   }, [countdownMinutes]);
 
   if (cdText.num + cdText.unit !== lastCdTextRef.current) {
@@ -270,7 +321,9 @@ function HeroSection({ data, selectedSide }: { data: Schedule[]; selectedSide: s
 
   return (
     <div class="hero" aria-live="polite">
-      <div class="hero-eyebrow"><span class="dot" />下一班</div>
+      <h2 class="hero-eyebrow">
+        <span class="dot" />下一班
+      </h2>
       <div class="hero-route">{routeText}</div>
       <div class="hero-row">
         <div class="hero-cell">
@@ -371,7 +424,9 @@ export default function StationBoard() {
       "/routes/" + selectedRouteId + "/schedules",
     )
       .then((resp) => {
-        const list = resp?.schedules ? resp.schedules.filter((s) => s.enabled) : [];
+        const list = resp?.schedules
+          ? resp.schedules.filter((s) => s.enabled)
+          : [];
         setSchedules(list);
       })
       .catch(() => setSchedules([]));
@@ -419,18 +474,26 @@ export default function StationBoard() {
   /* ---- URL sync ---- */
   function syncUrl(stationId?: string, routeId?: string) {
     const params = new URLSearchParams();
-    const st = stationId !== undefined ? stationId : selectedStationIdRef.current;
+    const st = stationId !== undefined
+      ? stationId
+      : selectedStationIdRef.current;
     const rt = routeId !== undefined ? routeId : selectedRouteIdRef.current;
     if (st) params.set("station", st);
     if (rt) params.set("route", rt);
     const qs = params.toString();
-    try { history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "")); } catch {}
+    try {
+      history.replaceState(null, "", location.pathname + (qs ? "?" + qs : ""));
+    } catch {}
   }
 
   function buildShareUrl(): string {
     const params = new URLSearchParams();
-    if (selectedStationIdRef.current) params.set("station", selectedStationIdRef.current);
-    if (selectedRouteIdRef.current) params.set("route", selectedRouteIdRef.current);
+    if (selectedStationIdRef.current) {
+      params.set("station", selectedStationIdRef.current);
+    }
+    if (selectedRouteIdRef.current) {
+      params.set("route", selectedRouteIdRef.current);
+    }
     const base = location.href.split("?")[0];
     return params.toString() ? base + "?" + params.toString() : base;
   }
@@ -455,7 +518,9 @@ export default function StationBoard() {
         "/routes/" + selectedRouteIdRef.current + "/schedules",
       )
         .then((resp) => {
-          const list = resp?.schedules ? resp.schedules.filter((s) => s.enabled) : [];
+          const list = resp?.schedules
+            ? resp.schedules.filter((s) => s.enabled)
+            : [];
           setSchedules(list);
         })
         .catch(() => {});
@@ -470,7 +535,9 @@ export default function StationBoard() {
       const btn = document.querySelector(".btn-share")!;
       const orig = btn.textContent || "分享";
       btn.textContent = "已复制";
-      setTimeout(() => { btn.textContent = orig; }, 1500);
+      setTimeout(() => {
+        btn.textContent = orig;
+      }, 1500);
     }
     function fallback() {
       const ta = document.createElement("textarea");
@@ -479,7 +546,9 @@ export default function StationBoard() {
       ta.style.opacity = "0";
       document.body.appendChild(ta);
       ta.select();
-      try { document.execCommand("copy"); } catch {}
+      try {
+        document.execCommand("copy");
+      } catch {}
       document.body.removeChild(ta);
       done();
     }
@@ -512,9 +581,10 @@ export default function StationBoard() {
   const currentMinutes = new Date().getHours() * 60 + new Date().getMinutes();
 
   const sortedSchedules = useMemo(
-    () => [...schedules].sort(
-      (a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time),
-    ),
+    () =>
+      [...schedules].sort(
+        (a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time),
+      ),
     [schedules],
   );
 
@@ -527,15 +597,25 @@ export default function StationBoard() {
       if (dm < 0) continue;
       let diff = dm - currentMinutes;
       if (diff < 0) diff += 1440;
-      if (diff < minDiff) { minDiff = diff; next = item; }
+      if (diff < minDiff) {
+        minDiff = diff;
+        next = item;
+      }
     }
     return next;
   }, [schedules, currentMinutes, selectedRouteId]);
 
-  const selectedSideName = routes.find((r) => r.id === selectedRouteId)?.name || "";
+  const selectedSideName = routes.find((r) => r.id === selectedRouteId)?.name ||
+    "";
 
   return (
     <main class="station">
+      <h1 class="sr-only">
+        {selectedStation
+          ? `${stationName}班车时刻表`
+          : "万载城北汽车站班车时刻表"}
+      </h1>
+
       {/* 蓝牌：站钟 */}
       <header class="masthead">
         <ClockDisplay />
@@ -543,6 +623,7 @@ export default function StationBoard() {
 
       {/* 电子信息屏 */}
       <section class="board">
+        <h2 class="sr-only">选择车站与线路</h2>
         <Dropdown
           label="站点"
           options={stationOptions}
@@ -569,7 +650,9 @@ export default function StationBoard() {
             type="button"
             class="btn-reverse"
             disabled={!currentPairByKey?.b}
-            title={currentPairByKey?.b ? displayRoute(currentPairByKey.b.name) : ""}
+            title={currentPairByKey?.b
+              ? displayRoute(currentPairByKey.b.name)
+              : ""}
             onClick={handleReverse}
           >
             换方向
@@ -580,8 +663,10 @@ export default function StationBoard() {
 
         <div class="departures">
           <div class="dep-head">
-            <span>发车时刻</span>
-            <span class="count">{sortedSchedules.length > 0 ? sortedSchedules.length + " 班" : ""}</span>
+            <h2 class="dep-title">发车时刻</h2>
+            <span class="count">
+              {sortedSchedules.length > 0 ? sortedSchedules.length + " 班" : ""}
+            </span>
           </div>
           <div class="list">
             {sortedSchedules.length === 0
@@ -593,9 +678,15 @@ export default function StationBoard() {
               : sortedSchedules.map((item, i) => {
                 const dm = parseTimeToMinutes(item.time);
                 const past = dm < currentMinutes ? " past" : "";
-                const lit = nextDeparture && item.time === nextDeparture.time ? " lit" : "";
+                const lit = nextDeparture && item.time === nextDeparture.time
+                  ? " lit"
+                  : "";
                 return (
-                  <div key={item.time + i} class={`row${past}${lit}`} style={`--i: ${i}`}>
+                  <div
+                    key={item.time + i}
+                    class={`row${past}${lit}`}
+                    style={`--i: ${i}`}
+                  >
                     <span class="time">{item.time}</span>
                     {item.note && <span class="note">{item.note}</span>}
                   </div>
@@ -611,7 +702,9 @@ export default function StationBoard() {
       <section class="notice">
         <div class="notice-row">
           <button class="btn-share" onClick={handleShare}>分享</button>
-          <span class={`file-status${statusErr ? " error" : ""}`}>{statusMsg}</span>
+          <span class={`file-status${statusErr ? " error" : ""}`}>
+            {statusMsg}
+          </span>
         </div>
       </section>
     </main>

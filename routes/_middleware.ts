@@ -9,6 +9,30 @@ export const handler = define.middleware(async (ctx) => {
 
     const method = ctx.req.method;
 
+    // B5：深链参数页 301 → 静态可收录路由（route 优先，其次 station）
+    if (method === "GET" && !path.startsWith("/api/") && path !== "/admin") {
+      const routeParam = url.searchParams.get("route");
+      const stationParam = url.searchParams.get("station");
+      if (routeParam) {
+        return new Response(null, {
+          status: 301,
+          headers: {
+            Location: `/r/${routeParam}`,
+            "Cache-Control": "no-store",
+          },
+        });
+      }
+      if (stationParam) {
+        return new Response(null, {
+          status: 301,
+          headers: {
+            Location: `/s/${stationParam}`,
+            "Cache-Control": "no-store",
+          },
+        });
+      }
+    }
+
     // Public read-only endpoints (GET only, no auth required)
     const publicReadPatterns = [
       "/api/display/",
@@ -20,7 +44,10 @@ export const handler = define.middleware(async (ctx) => {
     const isPublicRead = method === "GET" &&
       publicReadPatterns.some((p) => path.startsWith(p));
 
-    if (path.startsWith("/api/display/") || path.startsWith("/api/auth/login") || isPublicRead) {
+    if (
+      path.startsWith("/api/display/") || path.startsWith("/api/auth/login") ||
+      isPublicRead
+    ) {
       ctx.state.user = null;
       return await ctx.next();
     }

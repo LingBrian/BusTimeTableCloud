@@ -1,0 +1,176 @@
+/* SEO 静态页样式：与品牌一致的深蓝 + 白卡风格，纯静态可读排版 */
+:root {
+  --seo-blue-deep: #0c3c8f;
+  --seo-blue: #1a63c9;
+  --seo-blue-tint: #e9f1fc;
+  --seo-blue-line: #c8d9f2;
+  --seo-ink: #13233c;
+  --seo-ink-soft: #5c6c84;
+  --seo-ink-faint: #98a7bd;
+  --seo-line: #dfe7f2;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  background: #eef3f9;
+  color: var(--seo-ink);
+  line-height: 1.8;
+  min-height: 100vh;
+}
+
+.s-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 32px) 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.s-mast {
+  background: var(--seo-blue-deep);
+  color: #fff;
+  border-radius: 10px 10px 0 0;
+  padding: 14px 20px;
+}
+.s-brand {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: 0.95rem;
+}
+.s-brand:hover { text-decoration: underline; }
+
+.s-crumb {
+  font-size: 0.72rem;
+  color: var(--seo-ink-soft);
+}
+.s-crumb a {
+  color: var(--seo-blue);
+  text-decoration: none;
+}
+.s-crumb a:hover { text-decoration: underline; }
+
+.s-card {
+  background: #fff;
+  border: 1px solid var(--seo-line);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 18px 44px rgba(15, 42, 90, 0.14), 0 6px 18px rgba(15, 42, 90, 0.08);
+  padding: clamp(20px, 3.5vw, 32px);
+}
+
+.s-card h1 {
+  font-size: clamp(1.3rem, 4vw, 1.7rem);
+  font-weight: 800;
+  color: var(--seo-ink);
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+.s-meta {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: var(--seo-ink-soft);
+}
+
+.s-sec {
+  margin-top: 26px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--seo-line);
+  font-size: 1rem;
+  color: var(--seo-blue-deep);
+  letter-spacing: 0.06em;
+}
+
+.s-empty {
+  margin-top: 16px;
+  color: var(--seo-ink-soft);
+  font-size: 0.9rem;
+}
+
+.s-routes {
+  margin-top: 14px;
+  list-style: none;
+}
+.s-routes li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--seo-line);
+}
+.s-routes li:last-child { border-bottom: none; }
+
+.s-route {
+  color: var(--seo-blue);
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+.s-route:hover { text-decoration: underline; }
+
+.s-route-note {
+  font-size: 0.72rem;
+  color: var(--seo-ink-faint);
+  white-space: nowrap;
+}
+
+.s-scheds {
+  margin-top: 14px;
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.s-sched {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--seo-line);
+}
+.s-sched:last-child { border-bottom: none; }
+.s-time {
+  font-family: "Cascadia Mono", "JetBrains Mono", Consolas, Menlo, monospace;
+  font-feature-settings: "tnum";
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--seo-blue-deep);
+}
+.s-note {
+  font-size: 0.8rem;
+  color: var(--seo-ink-soft);
+}
+
+.s-reverse {
+  margin-top: 14px;
+}
+.s-reverse a {
+  color: var(--seo-blue);
+  font-weight: 700;
+  text-decoration: none;
+}
+.s-reverse a:hover { text-decoration: underline; }
+
+.s-foot {
+  font-size: 0.72rem;
+  color: var(--seo-ink-faint);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+.s-foot a {
+  color: var(--seo-blue);
+  text-decoration: none;
+}
+.s-foot a:hover { text-decoration: underline; }
+
+:focus-visible {
+  outline: 2px solid var(--seo-blue);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
